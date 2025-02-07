@@ -181,6 +181,12 @@ func (AssetEndpointProfileTestResource) Exists(ctx context.Context, client *clie
 
 func (AssetEndpointProfileTestResource) basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "myAssetEndpointProfileBasic"
 	resource_group_name = "adr-terraform-test-113553226"
@@ -195,6 +201,11 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 
 func (AssetEndpointProfileTestResource) completeCertificate(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {}
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "myAssetEndpointProfileCertificate"
@@ -214,6 +225,12 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 
 func (AssetEndpointProfileTestResource) completeUsernamePassword(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "myAssetEndpointProfileUsername"
 	resource_group_name = "adr-terraform-test-113553226"
@@ -233,6 +250,12 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 
 func (AssetEndpointProfileTestResource) completeAnonymous(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "myAssetEndpointProfileAnonymous"
 	resource_group_name = "adr-terraform-test-113553226"
@@ -251,6 +274,12 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 func (r AssetEndpointProfileTestResource) requiresImport(data acceptance.TestData) string {
 	template := r.basic(data)
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {}
+
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "import" {

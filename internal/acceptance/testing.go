@@ -18,7 +18,7 @@ import (
 func PreCheck(t *testing.T) {
 	variables := []string{
 		"ARM_CLIENT_ID",
-		"ARM_CLIENT_SECRET",
+		"ARM_USE_MSI",
 		"ARM_SUBSCRIPTION_ID",
 		"ARM_TENANT_ID",
 		"ARM_TEST_LOCATION",
@@ -76,12 +76,12 @@ func GetAuthConfig(t *testing.T) *auth.Credentials {
 
 		ClientCertificatePath:     os.Getenv("ARM_CLIENT_CERTIFICATE_PATH"),
 		ClientCertificatePassword: os.Getenv("ARM_CLIENT_CERTIFICATE_PASSWORD"),
-		ClientSecret:              os.Getenv("ARM_CLIENT_SECRET"),
+		// UseMsi:                    os.Getenv("ARM_USE_MSI"),
 
 		EnableAuthenticatingUsingClientCertificate: true,
-		EnableAuthenticatingUsingClientSecret:      true,
+		EnableAuthenticatingUsingClientSecret:      false,
 		EnableAuthenticatingUsingAzureCLI:          false,
-		EnableAuthenticatingUsingManagedIdentity:   false,
+		EnableAuthenticatingUsingManagedIdentity:   true,
 		EnableAuthenticationUsingOIDC:              false,
 		EnableAuthenticationUsingGitHubOIDC:        false,
 	}

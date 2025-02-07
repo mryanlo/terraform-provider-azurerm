@@ -96,7 +96,7 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
-testacc: fmtcheck
+testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout $(TESTTIMEOUT) -ldflags="-X=github.com/hashicorp/terraform-provider-azurerm/version.ProviderVersion=acc"
 
 acctests: fmtcheck
