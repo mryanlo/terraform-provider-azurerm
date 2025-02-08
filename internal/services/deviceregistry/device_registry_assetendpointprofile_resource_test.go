@@ -274,12 +274,6 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 func (r AssetEndpointProfileTestResource) requiresImport(data acceptance.TestData) string {
 	template := r.basic(data)
 	return fmt.Sprintf(`
-provider "azurerm" {
-  features {}
-}
-
-data "azurerm_client_config" "current" {}
-
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "import" {
