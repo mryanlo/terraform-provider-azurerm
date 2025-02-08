@@ -62,6 +62,14 @@ func TestAccAssetEndpointProfile_basic(t *testing.T) {
 			Config: r.basic(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
+				check.That(data.ResourceName).Key("endpoint_profile_type").HasValue("OpcUa"),
+				check.That(data.ResourceName).Key("discovered_asset_endpoint_profile_ref").DoesNotExist(),
+				check.That(data.ResourceName).Key("additional_configuration").DoesNotExist(),
+				check.That(data.ResourceName).Key("authentication_method").DoesNotExist(),
+				check.That(data.ResourceName).Key("x509_credentials_certificate_secret_name").DoesNotExist(),
+				check.That(data.ResourceName).Key("username_password_credentials_username_secret_name").DoesNotExist(),
+				check.That(data.ResourceName).Key("username_password_credentials_password_secret_name").DoesNotExist(),
 			),
 		},
 		data.ImportStep(),
@@ -77,6 +85,14 @@ func TestAccAssetEndpointProfile_complete_certificate(t *testing.T) {
 			Config: r.completeCertificate(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
+				check.That(data.ResourceName).Key("endpoint_profile_type").HasValue("OpcUa"),
+				check.That(data.ResourceName).Key("discovered_asset_endpoint_profile_ref").HasValue("discoveredAssetEndpointProfile123"),
+				check.That(data.ResourceName).Key("additional_configuration").HasValue("{\"foo\": \"bar\"}"),
+				check.That(data.ResourceName).Key("authentication_method").HasValue("Certificate"),
+				check.That(data.ResourceName).Key("x509_credentials_certificate_secret_name").HasValue("myCertificateRef"),
+				check.That(data.ResourceName).Key("username_password_credentials_username_secret_name").DoesNotExist(),
+				check.That(data.ResourceName).Key("username_password_credentials_password_secret_name").DoesNotExist(),
 			),
 		},
 		data.ImportStep(),
@@ -92,6 +108,14 @@ func TestAccAssetEndpointProfile_complete_usernamePassword(t *testing.T) {
 			Config: r.completeUsernamePassword(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
+				check.That(data.ResourceName).Key("endpoint_profile_type").HasValue("OpcUa"),
+				check.That(data.ResourceName).Key("discovered_asset_endpoint_profile_ref").HasValue("discoveredAssetEndpointProfile123"),
+				check.That(data.ResourceName).Key("additional_configuration").HasValue("{\"foo\": \"bar\"}"),
+				check.That(data.ResourceName).Key("authentication_method").HasValue("UsernamePassword"),
+				check.That(data.ResourceName).Key("x509_credentials_certificate_secret_name").DoesNotExist(),
+				check.That(data.ResourceName).Key("username_password_credentials_username_secret_name").HasValue("myUsernameRef"),
+				check.That(data.ResourceName).Key("username_password_credentials_password_secret_name").HasValue("myPasswordRef"),
 			),
 		},
 		data.ImportStep(),
@@ -107,6 +131,14 @@ func TestAccAssetEndpointProfile_complete_anonymous(t *testing.T) {
 			Config: r.completeAnonymous(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
+				check.That(data.ResourceName).Key("endpoint_profile_type").HasValue("OpcUa"),
+				check.That(data.ResourceName).Key("discovered_asset_endpoint_profile_ref").HasValue("discoveredAssetEndpointProfile123"),
+				check.That(data.ResourceName).Key("additional_configuration").HasValue("{\"foo\": \"bar\"}"),
+				check.That(data.ResourceName).Key("authentication_method").HasValue("Anonymous"),
+				check.That(data.ResourceName).Key("x509_credentials_certificate_secret_name").DoesNotExist(),
+				check.That(data.ResourceName).Key("username_password_credentials_username_secret_name").DoesNotExist(),
+				check.That(data.ResourceName).Key("username_password_credentials_password_secret_name").DoesNotExist(),
 			),
 		},
 		data.ImportStep(),
@@ -133,7 +165,7 @@ func TestAccAssetEndpointProfile_update(t *testing.T) {
 	r := AssetEndpointProfileTestResource{}
 
 	data.ResourceTest(t, r, []acceptance.TestStep{
-		{ // first provision the resource
+		{ // first create the resource
 			Config: r.basic(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
@@ -144,6 +176,14 @@ func TestAccAssetEndpointProfile_update(t *testing.T) {
 			Config: r.completeCertificate(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
+				check.That(data.ResourceName).Key("endpoint_profile_type").HasValue("OpcUa"),
+				check.That(data.ResourceName).Key("discovered_asset_endpoint_profile_ref").HasValue("discoveredAssetEndpointProfile123"),
+				check.That(data.ResourceName).Key("additional_configuration").HasValue("{\"foo\": \"bar\"}"),
+				check.That(data.ResourceName).Key("authentication_method").HasValue("Certificate"),
+				check.That(data.ResourceName).Key("x509_credentials_certificate_secret_name").HasValue("myCertificateRef"),
+				check.That(data.ResourceName).Key("username_password_credentials_username_secret_name").DoesNotExist(),
+				check.That(data.ResourceName).Key("username_password_credentials_password_secret_name").DoesNotExist(),
 			),
 		},
 		data.ImportStep(),
@@ -151,6 +191,14 @@ func TestAccAssetEndpointProfile_update(t *testing.T) {
 			Config: r.completeUsernamePassword(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
+				check.That(data.ResourceName).Key("endpoint_profile_type").HasValue("OpcUa"),
+				check.That(data.ResourceName).Key("discovered_asset_endpoint_profile_ref").HasValue("discoveredAssetEndpointProfile123"),
+				check.That(data.ResourceName).Key("additional_configuration").HasValue("{\"foo\": \"bar\"}"),
+				check.That(data.ResourceName).Key("authentication_method").HasValue("UsernamePassword"),
+				check.That(data.ResourceName).Key("x509_credentials_certificate_secret_name").HasValue("myCertificateRef"), // unchanged
+				check.That(data.ResourceName).Key("username_password_credentials_username_secret_name").HasValue("myUsernameRef"),
+				check.That(data.ResourceName).Key("username_password_credentials_password_secret_name").HasValue("myPasswordRef"),
 			),
 		},
 		data.ImportStep(),
@@ -158,6 +206,14 @@ func TestAccAssetEndpointProfile_update(t *testing.T) {
 			Config: r.completeAnonymous(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
+				check.That(data.ResourceName).Key("endpoint_profile_type").HasValue("OpcUa"),
+				check.That(data.ResourceName).Key("discovered_asset_endpoint_profile_ref").HasValue("discoveredAssetEndpointProfile123"),
+				check.That(data.ResourceName).Key("additional_configuration").HasValue("{\"foo\": \"bar\"}"),
+				check.That(data.ResourceName).Key("authentication_method").HasValue("Anonymous"),
+				check.That(data.ResourceName).Key("x509_credentials_certificate_secret_name").HasValue("myCertificateRef"), // unchanged
+				check.That(data.ResourceName).Key("username_password_credentials_username_secret_name").HasValue("myUsernameRef"), // unchanged
+				check.That(data.ResourceName).Key("username_password_credentials_password_secret_name").HasValue("myPasswordRef"), // unchanged
 			),
 		},
 		data.ImportStep(),
@@ -188,15 +244,15 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name             = "my-assetendpointprofile-basic"
+	name             = "my-assetendpointprofile-basic-%[1]d"
 	resource_group_name = "adr-terraform-test-113553226"
 	extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-test-113553226/providers/Microsoft.ExtendedLocation/customLocations/location-2h2vr"
 	extended_location_type = "CustomLocation"
 	target_address = "opc.tcp://foo"
 	endpoint_profile_type = "OpcUa"
-	location         = "%s"
+	location         = "%[2]s"
 }
-`, data.Locations.Primary)
+`, data.RandomInteger, data.Locations.Primary)
 }
 
 func (AssetEndpointProfileTestResource) completeCertificate(data acceptance.TestData) string {
@@ -208,7 +264,7 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name             = "my-assetendpointprofile-certificate"
+	name             = "my-assetendpointprofile-certificate-%[1]d"
 	resource_group_name = "adr-terraform-test-113553226"
 	extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-test-113553226/providers/Microsoft.ExtendedLocation/customLocations/location-2h2vr"
 	extended_location_type = "CustomLocation"
@@ -218,9 +274,9 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	additional_configuration = "{\"foo\": \"bar\"}"
 	authentication_method = "Certificate"
 	x509_credentials_certificate_secret_name = "myCertificateRef"
-	location         = "%s"
+	location         = "%[2]s"
 }
-`, data.Locations.Primary)
+`, data.RandomInteger, data.Locations.Primary)
 }
 
 func (AssetEndpointProfileTestResource) completeUsernamePassword(data acceptance.TestData) string {
@@ -232,7 +288,7 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name             = "my-assetendpointprofile-username"
+	name             = "my-assetendpointprofile-username-%[1]d"
 	resource_group_name = "adr-terraform-test-113553226"
 	extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-test-113553226/providers/Microsoft.ExtendedLocation/customLocations/location-2h2vr"
 	extended_location_type = "CustomLocation"
@@ -243,9 +299,9 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	authentication_method = "UsernamePassword"
 	username_password_credentials_username_secret_name = "myUsernameRef"
 	username_password_credentials_password_secret_name = "myPasswordRef"
-	location         = "%s"
+	location         = "%[2]s"
 }
-`, data.Locations.Primary)
+`, data.RandomInteger, data.Locations.Primary)
 }
 
 func (AssetEndpointProfileTestResource) completeAnonymous(data acceptance.TestData) string {
@@ -257,7 +313,7 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name             = "my-assetendpointprofile-anonymous"
+	name             = "my-assetendpointprofile-anonymous-%[1]d"
 	resource_group_name = "adr-terraform-test-113553226"
 	extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-test-113553226/providers/Microsoft.ExtendedLocation/customLocations/location-2h2vr"
 	extended_location_type = "CustomLocation"
@@ -266,9 +322,9 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	discovered_asset_endpoint_profile_ref = "discoveredAssetEndpointProfile123"
 	additional_configuration = "{\"foo\": \"bar\"}"
 	authentication_method = "Anonymous"
-	location         = "%s"
+	location         = "%[2]s"
 }
-`, data.Locations.Primary)
+`, data.RandomInteger, data.Locations.Primary)
 }
 
 func (r AssetEndpointProfileTestResource) requiresImport(data acceptance.TestData) string {
