@@ -32,9 +32,11 @@ func TestAssetEndpointProfileResource(t *testing.T) {
 	// AssetEndpointProfile resources must be provisioned to the arc-enabled AIO cluster
 	// and avoid creating the cluster multiple times.
 	testCases := map[string]map[string]func(t *testing.T){
+		// Run the AIO cluster initialization first.
 		"InitializeAioCluster": {
-
+			"initializeCluster": testAccAssetEndpointProfile_initializeCluster,
 		},
+		// Run the acceptance tests for the AssetEndpointProfile resource
 		"Resource": {
 			"basic":          testAccAssetEndpointProfile_basic,
 			"requiresImport": testAccAssetEndpointProfile_requiresImport,
@@ -215,6 +217,22 @@ func testAccAssetEndpointProfile_update(t *testing.T) {
 	})
 }
 
+func testAccAssetEndpointProfile_initializeCluster(t *testing.T) {
+	data := acceptance.BuildTestData(t, "azurerm_arc_kubernetes_cluster", "test")
+	r := AssetEndpointProfileTestResource{}
+
+	credential, publicKey, privateKey := r.getCredentials(t)
+
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
+		{
+			Config: r.template(data, credential, publicKey, privateKey),
+			Check: acceptance.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+			),
+		},
+	})
+}
+
 func (AssetEndpointProfileTestResource) Exists(ctx context.Context, client *clients.Client, state *pluginsdk.InstanceState) (*bool, error) {
 	id, err := assetendpointprofiles.ParseAssetEndpointProfileID(state.ID)
 	if err != nil {
@@ -234,7 +252,8 @@ func (AssetEndpointProfileTestResource) basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "acctest-assetendpointprofile-%[1]d"
-	resource_group_name = "adr-terraform-test-113553226"
+	// resource_group_name = azurerm_resource_group.test.name
+	resource_group_name = "ryloterraformtest-wsl-rg"
 	extended_location_name = local.custom_location
 	extended_location_type = "CustomLocation"
 	target_address = "opc.tcp://foo"
@@ -249,7 +268,8 @@ func (AssetEndpointProfileTestResource) completeCertificate(data acceptance.Test
 	return fmt.Sprintf(`
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "acctest-assetendpointprofile-%[1]d"
-	resource_group_name = "adr-terraform-test-113553226"
+	// resource_group_name = azurerm_resource_group.test.name
+	resource_group_name = "ryloterraformtest-wsl-rg"
 	extended_location_name = local.custom_location
 	extended_location_type = "CustomLocation"
 	target_address = "opc.tcp://foo"
@@ -267,7 +287,8 @@ func (AssetEndpointProfileTestResource) completeUsernamePassword(data acceptance
 	return fmt.Sprintf(`
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "acctest-assetendpointprofile-%[1]d"
-	resource_group_name = "adr-terraform-test-113553226"
+	// resource_group_name = azurerm_resource_group.test.name
+	resource_group_name = "ryloterraformtest-wsl-rg"
 	extended_location_name = local.custom_location
 	extended_location_type = "CustomLocation"
 	target_address = "opc.tcp://foo"
@@ -286,7 +307,8 @@ func (AssetEndpointProfileTestResource) completeAnonymous(data acceptance.TestDa
 	return fmt.Sprintf(`
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "acctest-assetendpointprofile-%[1]d"
-	resource_group_name = "adr-terraform-test-113553226"
+	// resource_group_name = azurerm_resource_group.test.name
+	resource_group_name = "ryloterraformtest-wsl-rg"
 	extended_location_name = local.custom_location
 	extended_location_type = "CustomLocation"
 	target_address = "opc.tcp://foo"
@@ -364,36 +386,43 @@ provider "azurerm" {
 
 data "azurerm_client_config" "current" {}
 
-resource "azurerm_resource_group" "test" {
-  name     = "acctestRG-%[1]d"
-  location = "%[2]s"
-}
+// resource "azurerm_resource_group" "test" {
+//   name     = "acctestRG-%[1]d"
+//   location = "%[2]s"
+// }
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestnw-%[1]d"
   address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.test.location
-  resource_group_name = azurerm_resource_group.test.name
+  // location            = azurerm_resource_group.test.location
+	location            = "%[2]s"
+  // resource_group_name = azurerm_resource_group.test.name
+	resource_group_name = "ryloterraformtest-wsl-rg"
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "internal"
-  resource_group_name  = azurerm_resource_group.test.name
+  // resource_group_name  = azurerm_resource_group.test.name
+	resource_group_name = "ryloterraformtest-wsl-rg"
   virtual_network_name = azurerm_virtual_network.test.name
   address_prefixes     = ["10.0.2.0/24"]
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%[1]d"
-  location            = azurerm_resource_group.test.location
-  resource_group_name = azurerm_resource_group.test.name
+  // location            = azurerm_resource_group.test.location
+  // resource_group_name = azurerm_resource_group.test.name
+	location            = "%[2]s"
+	resource_group_name = "ryloterraformtest-wsl-rg"
   allocation_method   = "Static"
 }
 
 resource "azurerm_network_interface" "test" {
   name                = "acctestnic-%[1]d"
-  location            = azurerm_resource_group.test.location
-  resource_group_name = azurerm_resource_group.test.name
+  // location            = azurerm_resource_group.test.location
+  // resource_group_name = azurerm_resource_group.test.name
+	location            = "%[2]s"
+	resource_group_name = "ryloterraformtest-wsl-rg"
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.test.id
@@ -404,8 +433,10 @@ resource "azurerm_network_interface" "test" {
 
 resource "azurerm_network_security_group" "my_terraform_nsg" {
   name                = "myNetworkSG-%[1]d"
-  location            = azurerm_resource_group.test.location
-  resource_group_name = azurerm_resource_group.test.name
+  // location            = azurerm_resource_group.test.location
+  // resource_group_name = azurerm_resource_group.test.name
+	location            = "%[2]s"
+	resource_group_name = "ryloterraformtest-wsl-rg"
   security_rule {
     name                       = "SSH"
     priority                   = 1001
@@ -432,8 +463,10 @@ resource "azurerm_network_interface_security_group_association" "test" {
 
 resource "azurerm_linux_virtual_machine" "test" {
   name                            = "acctestVM-%[1]d"
-  resource_group_name             = azurerm_resource_group.test.name
-  location                        = azurerm_resource_group.test.location
+  // resource_group_name             = azurerm_resource_group.test.name
+  // location                        = azurerm_resource_group.test.location
+	resource_group_name             = "ryloterraformtest-wsl-rg"
+	location                        = "%[2]s"
   size                            = "Standard_F2"
   admin_username                  = "adminuser"
   admin_password                  = "%[3]s"
@@ -461,8 +494,10 @@ resource "azurerm_linux_virtual_machine" "test" {
 
 resource "azurerm_arc_kubernetes_cluster" "test" {
   name                         = "acctest-akcc-%[1]d"
-  resource_group_name          = azurerm_resource_group.test.name
-  location                     = azurerm_resource_group.test.location
+  // resource_group_name          = azurerm_resource_group.test.name
+  // location                     = azurerm_resource_group.test.location
+	resource_group_name          = "ryloterraformtest-wsl-rg"
+	location                     = "%[2]s"
   agent_public_key_certificate = "%[4]s"
   identity {
     type = "SystemAssigned"
@@ -474,21 +509,6 @@ resource "azurerm_arc_kubernetes_cluster" "test" {
     azurerm_linux_virtual_machine.test
   ]
 }
-
-resource "azurerm_arc_kubernetes_cluster_extension" "test" {
-  name              = "extension-%[1]d"
-  cluster_id        = azurerm_arc_kubernetes_cluster.test.id
-  extension_type    = "microsoft.vmware"
-  release_namespace = "vmware-extension"
-
-  configuration_settings = {
-    "Microsoft.CustomLocation.ServiceAccount" = "vmware-operator"
-  }
-
-  identity {
-    type = "SystemAssigned"
-  }
-}
 `, data.RandomInteger, data.Locations.Primary, credential, publicKey, provisionTemplate)
 }
 
@@ -496,7 +516,7 @@ func (r AssetEndpointProfileTestResource) provisionTemplate(data acceptance.Test
 	// Get client secrets from env vars because we need them 
 	// to remote execute az cli commands on the VM & k8s cluster.
 	clientId := os.Getenv("ARM_CLIENT_ID")
-	clientSecret := os.Getenv("ARM_CLIENT_SECRET")
+	clientSecret := "foo" // os.Getenv("ARM_CLIENT_SECRET")
 	
 	return fmt.Sprintf(`
 connection {
@@ -509,9 +529,11 @@ connection {
 provisioner "file" {
  content = templatefile("testdata/setup_aio_cluster.sh.tftpl", {
    subscription_id     = data.azurerm_client_config.current.subscription_id
-   resource_group_name = azurerm_resource_group.test.name
+  //  resource_group_name = azurerm_resource_group.test.name
+	 resource_group_name = "ryloterraformtest-wsl-rg"
    cluster_name        = "acctest-akcc-%[2]d"
-   location            = azurerm_resource_group.test.location
+  //  location            = azurerm_resource_group.test.location
+	 location            = "westus2"
 	 custom_location     = local.custom_location
 	 storage_account     = local.storage_account
 	 schema_registry     = local.schema_registry

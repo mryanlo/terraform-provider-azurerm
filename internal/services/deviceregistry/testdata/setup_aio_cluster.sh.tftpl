@@ -23,8 +23,8 @@ go install sigs.k8s.io/kind@latest
 
 # Install az cli and login
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-az login --username "${client_id}" --password "${client_secret}" --service-principal --tenant "${tenant_id}"
-# az login --identity --username "${client_id}"
+# az login --username "${client_id}" --password "${client_secret}" --service-principal --tenant "${tenant_id}"
+az login --identity --username "${client_id}"
 
 # Create a new cluster
 export PATH="$HOME/go/bin:$PATH"
