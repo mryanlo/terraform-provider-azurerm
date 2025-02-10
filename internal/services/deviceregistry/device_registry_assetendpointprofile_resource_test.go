@@ -24,40 +24,35 @@ import (
 
 type AssetEndpointProfileTestResource struct{}
 
-// func TestAssetEndpointProfileResource(t *testing.T) {
-// 	// Setup arc enabled cluster with Azure IoT Operations extension installed.
+func TestAssetEndpointProfileResource(t *testing.T) {
+	// Setup arc enabled cluster with Azure IoT Operations extension installed.
 
-// 	// Run all the acceptance tests for the AssetEndpointProfile resource on the cluster.
-// 	// NOTE: this is a combined test rather than separate split out tests due to
-// 	// AssetEndpointProfile resources must be provisioned to the arc-enabled cluster
-// 	// and avoid creating the arc-enabled cluster multiple times.
-// 	testCases := map[string]map[string]func(t *testing.T){
-// 		"Resource": {
-// 			"basic":          testAccAssetEndpointProfile_basic,
-// 			"requiresImport": testAccAssetEndpointProfile_requiresImport,
-// 			"completeCertificate":       testAccAssetEndpointProfile_complete_certificate,
-// 			"completeUsernamePassword":  testAccAssetEndpointProfile_complete_usernamePassword,
-// 			"completeAnonymous":         testAccAssetEndpointProfile_complete_anonymous,
-// 			"update":         testAccAssetEndpointProfile_update,
-// 		},
-// 	}
+	// Run all the acceptance tests for the AssetEndpointProfile resource on the cluster.
+	// NOTE: this is a combined test rather than separate split out tests due to
+	// AssetEndpointProfile resources must be provisioned to the arc-enabled AIO cluster
+	// and avoid creating the cluster multiple times.
+	testCases := map[string]map[string]func(t *testing.T){
+		"InitializeAioCluster": {
 
-// 	for group, m := range testCases {
-// 		for name, tc := range m {
-// 			t.Run(group, func(t *testing.T) {
-// 				t.Run(name, func(t *testing.T) {
-// 					tc(t)
-// 				})
-// 			})
-// 		}
-// 	}
-// }
+		},
+		"Resource": {
+			"basic":          testAccAssetEndpointProfile_basic,
+			"requiresImport": testAccAssetEndpointProfile_requiresImport,
+			"completeCertificate":       testAccAssetEndpointProfile_complete_certificate,
+			"completeUsernamePassword":  testAccAssetEndpointProfile_complete_usernamePassword,
+			"completeAnonymous":         testAccAssetEndpointProfile_complete_anonymous,
+			"update":         testAccAssetEndpointProfile_update,
+		},
+	}
 
-func TestAccAssetEndpointProfile_basic(t *testing.T) {
+	acceptance.RunTestsInSequence(t, testCases)
+}
+
+func testAccAssetEndpointProfile_basic(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
 			Config: r.basic(data),
 			Check: acceptance.ComposeTestCheckFunc(
@@ -76,11 +71,11 @@ func TestAccAssetEndpointProfile_basic(t *testing.T) {
 	})
 }
 
-func TestAccAssetEndpointProfile_complete_certificate(t *testing.T) {
+func testAccAssetEndpointProfile_complete_certificate(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
 			Config: r.completeCertificate(data),
 			Check: acceptance.ComposeTestCheckFunc(
@@ -99,11 +94,11 @@ func TestAccAssetEndpointProfile_complete_certificate(t *testing.T) {
 	})
 }
 
-func TestAccAssetEndpointProfile_complete_usernamePassword(t *testing.T) {
+func testAccAssetEndpointProfile_complete_usernamePassword(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
 			Config: r.completeUsernamePassword(data),
 			Check: acceptance.ComposeTestCheckFunc(
@@ -122,11 +117,11 @@ func TestAccAssetEndpointProfile_complete_usernamePassword(t *testing.T) {
 	})
 }
 
-func TestAccAssetEndpointProfile_complete_anonymous(t *testing.T) {
+func testAccAssetEndpointProfile_complete_anonymous(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
 			Config: r.completeAnonymous(data),
 			Check: acceptance.ComposeTestCheckFunc(
@@ -145,11 +140,11 @@ func TestAccAssetEndpointProfile_complete_anonymous(t *testing.T) {
 	})
 }
 
-func TestAccAssetEndpointProfile_requiresImport(t *testing.T) {
+func testAccAssetEndpointProfile_requiresImport(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
 			Config: r.basic(data),
 			Check: acceptance.ComposeTestCheckFunc(
@@ -160,11 +155,11 @@ func TestAccAssetEndpointProfile_requiresImport(t *testing.T) {
 	})
 }
 
-func TestAccAssetEndpointProfile_update(t *testing.T) {
+func testAccAssetEndpointProfile_update(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{ // first create the resource
 			Config: r.basic(data),
 			Check: acceptance.ComposeTestCheckFunc(
@@ -237,16 +232,10 @@ func (AssetEndpointProfileTestResource) Exists(ctx context.Context, client *clie
 
 func (AssetEndpointProfileTestResource) basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-provider "azurerm" {
-  features {}
-}
-
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "acctest-assetendpointprofile-%[1]d"
 	resource_group_name = "adr-terraform-test-113553226"
-	extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-test-113553226/providers/Microsoft.ExtendedLocation/customLocations/location-2h2vr"
+	extended_location_name = local.custom_location
 	extended_location_type = "CustomLocation"
 	target_address = "opc.tcp://foo"
 	endpoint_profile_type = "OpcUa"
@@ -258,16 +247,10 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 
 func (AssetEndpointProfileTestResource) completeCertificate(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-provider "azurerm" {
-  features {}
-}
-
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "acctest-assetendpointprofile-%[1]d"
 	resource_group_name = "adr-terraform-test-113553226"
-	extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-test-113553226/providers/Microsoft.ExtendedLocation/customLocations/location-2h2vr"
+	extended_location_name = local.custom_location
 	extended_location_type = "CustomLocation"
 	target_address = "opc.tcp://foo"
 	endpoint_profile_type = "OpcUa"
@@ -282,16 +265,10 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 
 func (AssetEndpointProfileTestResource) completeUsernamePassword(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-provider "azurerm" {
-  features {}
-}
-
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "acctest-assetendpointprofile-%[1]d"
 	resource_group_name = "adr-terraform-test-113553226"
-	extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-test-113553226/providers/Microsoft.ExtendedLocation/customLocations/location-2h2vr"
+	extended_location_name = local.custom_location
 	extended_location_type = "CustomLocation"
 	target_address = "opc.tcp://foo"
 	endpoint_profile_type = "OpcUa"
@@ -307,16 +284,10 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 
 func (AssetEndpointProfileTestResource) completeAnonymous(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-provider "azurerm" {
-  features {}
-}
-
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name             = "acctest-assetendpointprofile-%[1]d"
 	resource_group_name = "adr-terraform-test-113553226"
-	extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-test-113553226/providers/Microsoft.ExtendedLocation/customLocations/location-2h2vr"
+	extended_location_name = local.custom_location
 	extended_location_type = "CustomLocation"
 	target_address = "opc.tcp://foo"
 	endpoint_profile_type = "OpcUa"
