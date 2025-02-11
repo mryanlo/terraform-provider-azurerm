@@ -56,8 +56,8 @@ func Build() (*clients.Client, error) {
 			ClientCertificatePassword: os.Getenv("ARM_CLIENT_CERTIFICATE_PASSWORD"),
 			ClientSecret:              os.Getenv("ARM_CLIENT_SECRET"),
 
-			EnableAuthenticatingUsingClientCertificate: true,
-			EnableAuthenticatingUsingClientSecret:      true,
+			EnableAuthenticatingUsingClientCertificate: false,
+			EnableAuthenticatingUsingClientSecret:      false,
 			EnableAuthenticatingUsingAzureCLI:          false,
 			EnableAuthenticatingUsingManagedIdentity:   true,
 			EnableAuthenticationUsingOIDC:              false,
