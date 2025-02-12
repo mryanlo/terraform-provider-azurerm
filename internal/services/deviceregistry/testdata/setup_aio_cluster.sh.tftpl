@@ -2,7 +2,7 @@
 
 # Install docker
 sudo apt-get update
-sudo apt-get -y install ca-certificates curl gnupg lsb-release
+sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release
 sudo mkdir -m 0755 -p /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 echo \
@@ -21,10 +21,30 @@ newgrp docker << END
 sudo snap install go --classic
 go install sigs.k8s.io/kind@latest
 
-# Install az cli and login
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+# Install az cli (per https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt#option-2-step-by-step-installation-instructions)
+
+## Download and install the Microsoft signing key:
+sudo mkdir -p /etc/apt/keyrings
+curl -sLS https://packages.microsoft.com/keys/microsoft.asc |
+  gpg --dearmor | sudo tee /etc/apt/keyrings/microsoft.gpg > /dev/null
+sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
+
+## Add the Azure CLI software repository:
+echo "Types: deb
+URIs: https://packages.microsoft.com/repos/azure-cli/
+Suites: $(lsb_release -cs)
+Components: main
+Architectures: $(dpkg --print-architecture)
+Signed-by: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/azure-cli.sources
+
+
+## Update repository information and install the azure-cli package:
+sudo apt-get update
+sudo apt-get install azure-cli=2.68.0-1~$(lsb_release -cs)
+
+# Login with az cli
+az login --identity --client-id "${client_id}"
 # az login --username "${client_id}" --password "${client_secret}" --service-principal --tenant "${tenant_id}"
-az login --identity --username "${client_id}"
 
 # Create a new cluster
 export PATH="$HOME/go/bin:$PATH"
@@ -42,6 +62,7 @@ python3 "${working_dir}/setup_aio_cluster.py" \
 --schemaRegistry "${schema_registry}" \
 --schemaRegistryNamespace "${schema_registry_namespace}" \
 --tenantId "${tenant_id}" \
+--clientId "${client_id}"
 
 # python3 setup_aio_cluster.py --subscriptionId "efb15086-3322-405d-a9d0-c35715a9b722" --resourceGroupName "rylo-test-rg-terraform" --clusterName "acctest-akcc-1" --location "westus2" --customLocation "adr-acctest-cl" --storageAccount "rylotestsa1" --schemaRegistry "rylotestsr" --schemaRegistryNamespace "rylotestsrn" --tenantId "72f988bf-86f1-41af-91ab-2d7cd011db47" 
 # python3 setup_aio_cluster.py --subscriptionId "efb15086-3322-405d-a9d0-c35715a9b722" --resourceGroupName "ryloterraformtest-wsl-rg" --clusterName "acctest-akcc-1" --location "westus2" --customLocation "adr-acctest-cl" --storageAccount "arylotestsa" --schemaRegistry "arylotestsr" --schemaRegistryNamespace "arylotestsrn" --tenantId "72f988bf-86f1-41af-91ab-2d7cd011db47" 
