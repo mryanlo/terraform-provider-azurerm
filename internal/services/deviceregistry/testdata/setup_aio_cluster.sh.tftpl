@@ -1,35 +1,22 @@
 #!/bin/bash
 
-# Install docker
+# Install k3s and setup k3s kubernetes cluster
+curl -sfL https://get.k3s.io | K3S_CONFIG_FILE=~/Config.yaml sh -s - # Runs k3s server with storage settings so AIO installation can succeed
+sudo chmod 777 /etc/rancher/k3s/k3s.yaml # enable access to the kube-config file so az cli commands can run
+
+# Install az cli:
+
+## Get required packages for az cli installation
 sudo apt-get update
 sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release
-sudo mkdir -m 0755 -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-sudo apt-get update
-sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# Manage Docker as a non-root user
-sudo groupadd docker || true
-sudo usermod -aG docker $USER
-newgrp docker << END
-
-# Install golang and kind
-sudo snap install go --classic
-go install sigs.k8s.io/kind@latest
-
-# Install az cli (per https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt#option-2-step-by-step-installation-instructions)
-
-## Download and install the Microsoft signing key:
+## Download and install microsoft signing key
 sudo mkdir -p /etc/apt/keyrings
 curl -sLS https://packages.microsoft.com/keys/microsoft.asc |
   gpg --dearmor | sudo tee /etc/apt/keyrings/microsoft.gpg > /dev/null
 sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
 
-## Add the Azure CLI software repository:
+## Add az cli software repository
 echo "Types: deb
 URIs: https://packages.microsoft.com/repos/azure-cli/
 Suites: $(lsb_release -cs)
@@ -37,19 +24,16 @@ Components: main
 Architectures: $(dpkg --print-architecture)
 Signed-by: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/azure-cli.sources
 
-
-## Update repository information and install the azure-cli package:
+## Install version 2.68.0
 sudo apt-get update
 sudo apt-get install azure-cli=2.68.0-1~$(lsb_release -cs)
 
 # Login with az cli
-az login --identity --client-id "${client_id}"
+## Login with service principal. Comment this line if you want to login with managed identity
 # az login --username "${client_id}" --password "${client_secret}" --service-principal --tenant "${tenant_id}"
 
-# Create a new cluster
-export PATH="$HOME/go/bin:$PATH"
-export KUBECONFIG="${working_dir}/kind-config"
-kind create cluster --name adr-terraform-kind --config kind.yaml --kubeconfig kind-config
+## Uncomment this line if you want to login with managed identity
+az login --identity --username "${client_id}"
 
 # Configure cluster and install Azure IoT Operations extension for the tests:
 python3 "${working_dir}/setup_aio_cluster.py" \
@@ -60,12 +44,4 @@ python3 "${working_dir}/setup_aio_cluster.py" \
 --customLocation "${custom_location}" \
 --storageAccount "${storage_account}" \
 --schemaRegistry "${schema_registry}" \
---schemaRegistryNamespace "${schema_registry_namespace}" \
---tenantId "${tenant_id}" \
---clientId "${client_id}"
-
-# python3 setup_aio_cluster.py --subscriptionId "efb15086-3322-405d-a9d0-c35715a9b722" --resourceGroupName "rylo-test-rg-terraform" --clusterName "acctest-akcc-1" --location "westus2" --customLocation "adr-acctest-cl" --storageAccount "rylotestsa1" --schemaRegistry "rylotestsr" --schemaRegistryNamespace "rylotestsrn" --tenantId "72f988bf-86f1-41af-91ab-2d7cd011db47" 
-# python3 setup_aio_cluster.py --subscriptionId "efb15086-3322-405d-a9d0-c35715a9b722" --resourceGroupName "ryloterraformtest-wsl-rg" --clusterName "acctest-akcc-1" --location "westus2" --customLocation "adr-acctest-cl" --storageAccount "arylotestsa" --schemaRegistry "arylotestsr" --schemaRegistryNamespace "arylotestsrn" --tenantId "72f988bf-86f1-41af-91ab-2d7cd011db47" 
-
-
-END
+--schemaRegistryNamespace "${schema_registry_namespace}"

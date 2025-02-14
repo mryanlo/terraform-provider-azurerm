@@ -15,9 +15,7 @@ import signal
 import stat
 import subprocess
 import time
-import urllib
 from subprocess import PIPE, Popen
-from urllib import request
 
 def register_az_providers():
     print("Registering required Azure providers...")
@@ -30,65 +28,92 @@ def register_az_providers():
         "Microsoft.SecretSyncController"
     ]
     for provider in required_providers:
-        # Equivalent of `az provider register -n <provider>`
         print("Registering provider " + provider + "...")
-        response = Popen(["az", "provider", "register", "-n", provider], stdout=PIPE, stderr=PIPE)
-        _, error = response.communicate()
+        
+        # `az provider register -n <provider> --only-show-errors`
+        register_provider_cmd = f"az provider register -n {provider} --only-show-errors"
+        response = subprocess.run(register_provider_cmd, stdout=PIPE, stderr=PIPE, shell=True)
         if response.returncode != 0:
-            raise Exception("Failed to register provider " + provider + ": " + error.decode("ascii"))
+            raise Exception("Failed to register provider " + provider + ": " + str(response.stderr))
         print("Successfully registered provider " + provider)
     
     print("Successfully registered required Azure providers")
     return
 
+def install_az_extensions():
+    print("Adding required Azure CLI extension...")
+    required_extensions = [
+        "aksarc",
+        "azure-iot-ops",
+        "connectedk8s",
+        "customlocation",
+        "k8s-extension"
+    ]
+    for extension in required_extensions:
+        print("Installing extension " + extension + "...")
+        
+        # `az extension add --upgrade --name <extension> --only-show-errors`
+        install_extension_cmd = f"az extension add --upgrade --name {extension} --only-show-errors"
+        response = subprocess.run(install_extension_cmd, stdout=PIPE, stderr=PIPE, shell=True)
+        if response.returncode != 0:
+            raise Exception("Failed to install extension " + extension + ": " + str(response.stderr))
+        print("Successfully installed extension " + extension)
+    
+    print("Successfully installed required Azure extensions")
+    return
+
 def onboard_k8s_cluster(resource_group_name, cluster_name, location):
     print("Connecting k8s cluster " + cluster_name + " to Azure...")
-
-    # Equivalent of `az connectedk8s connect --name $CLUSTER_NAME --location $LOCATION --resource-group $RESOURCE_GROUP`
-    response = Popen(["az", "connectedk8s", "connect", "--name", cluster_name, "--location", location, "--resource-group", resource_group_name], stdout=PIPE, stderr=PIPE)
-    _, error = response.communicate()
-    if response.returncode != 0:
-        raise Exception("Failed to connect k8s cluster " + cluster_name + ": " + error.decode("ascii"))
     
-    print("Successfully connected k8s cluster " + cluster_name + " to Azure. Enabling features on the cluster...")
-
-    # Equivalent of `$OBJECT_ID=$(az ad sp show --id bc313c14-388c-4e7d-a58e-70017303ee3b --query id -o tsv)`
-    response = Popen(["az", "ad", "sp", "show", "--id", "bc313c14-388c-4e7d-a58e-70017303ee3b", "--query", "id", "-o", "tsv"], stdout=PIPE, stderr=PIPE)
-    object_id, error = response.communicate()
+    # `az connectedk8s connect --name <cluster_name> --location <location> --resource-group <resource_group_name> --kube-config /etc/rancher/k3s/k3s.yaml --only-show-errors`
+    connect_cluster_cmd = f"az connectedk8s connect --name {cluster_name} --location {location} --resource-group {resource_group_name} --kube-config /etc/rancher/k3s/k3s.yaml --only-show-errors"
+    response = subprocess.run(connect_cluster_cmd, stdout=PIPE, stderr=PIPE, shell=True)
     if response.returncode != 0:
-        raise Exception("Failed to get object id of Microsoft Entra ID Application for Azure Arc service: " + error.decode("ascii"))
+        raise Exception("Failed to connect k8s cluster " + cluster_name + ": " + str(response.stderr))
+    
+    print("Successfully connected k8s cluster " + cluster_name + " to Azure. Getting object ID of Microsoft Entra ID Application for Azure Arc service...")
 
-    print("Enabling features on the cluster...")
-    # Equivalent of `az connectedk8s enable-features -n $CLUSTER_NAME -g $RESOURCE_GROUP --custom-locations-oid $OBJECT_ID --features cluster-connect custom-locations`
-    response = Popen(["az", "connectedk8s", "enable-features", "-n", cluster_name, "-g", resource_group_name, "--custom-locations-oid", object_id.strip(), "--features", "cluster-connect", "custom-locations"], stdout=PIPE, stderr=PIPE)
-    _, error = response.communicate()
+    # `az ad sp show --id bc313c14-388c-4e7d-a58e-70017303ee3b --query id -o tsv --only-show-errors`
+    get_object_id_cmd = f"az ad sp show --id bc313c14-388c-4e7d-a58e-70017303ee3b --query id -o tsv --only-show-errors"
+    response = subprocess.run(get_object_id_cmd, stdout=PIPE, stderr=PIPE, shell=True, text=True)
     if response.returncode != 0:
-        raise Exception("Failed to enable features on k8s cluster " + cluster_name + ": " + error.decode("ascii"))
+        raise Exception("Failed to get object ID of Microsoft Entra ID Application for Azure Arc service: " + str(response.stderr))
+    object_id = response.stdout
+
+    print("Successfully got object ID of Microsoft Entra ID Application for Azure Arc service. Enabling features on the cluster...")
+    
+    # `az connectedk8s enable-features -n <cluster_name> -g <resource_group> --custom-locations-oid <object_id> --features cluster-connect custom-locations --kube-config /etc/rancher/k3s/k3s.yaml --only-show-errors`
+    enable_features_cmd = f"az connectedk8s enable-features -n {cluster_name} -g {resource_group_name} --custom-locations-oid {object_id.strip()} --features cluster-connect custom-locations --kube-config /etc/rancher/k3s/k3s.yaml --only-show-errors"
+    response = subprocess.run(enable_features_cmd, stdout=PIPE, stderr=PIPE, shell=True)
+    if response.returncode != 0:
+        raise Exception("Failed to enable features on k8s cluster " + cluster_name + ": " + str(response.stderr))
     
     print("Successfully enabled features on k8s cluster " + cluster_name)
     return
 
 def setup_schema_registry(storage_account, schema_registry, schema_registry_namespace, resource_group_name, location):
-    # print("Setting up storage account " + storage_account + " for schema registry " + schema_registry + "...")
-    # Equivalent of `az storage account create --name $STORAGE_ACCOUNT --location $LOCATION --resource-group $RESOURCE_GROUP --enable-hierarchical-namespace`
-    response = Popen(["az", "storage", "account", "create", "--name", storage_account, "--location", location, "--resource-group", resource_group_name, "--enable-hierarchical-namespace"], stdout=PIPE, stderr=PIPE)
-    _, error = response.communicate()
+    print("Setting up storage account " + storage_account + " for schema registry " + schema_registry + "...")
+    
+    # `az storage account create --name <storage_account> --location <location> --resource-group <resource_group_name> --enable-hierarchical-namespace --only-show-errors`
+    create_sa_cmd = f"az storage account create --name {storage_account} --location {location} --resource-group {resource_group_name} --enable-hierarchical-namespace --only-show-errors"
+    response = subprocess.run(create_sa_cmd, stdout=PIPE, stderr=PIPE, shell=True)
     if response.returncode != 0:
-        raise Exception("Failed to create storage account " + storage_account + ": " + error.decode("ascii"))
+        raise Exception("Failed to create storage account " + storage_account + ": " + str(response.stderr))
 
     print("Successfully created storage account " + storage_account + ". Setting up schema registry " + schema_registry)
 
-    # Equivalent of `az storage account show --name $STORAGE_ACCOUNT -o tsv --query id`
-    response = Popen(["az", "storage", "account", "show", "--name", storage_account, "-o", "tsv", "--query", "id"], stdout=PIPE, stderr=PIPE)
-    storage_account_id, error = response.communicate()
+    # `az storage account show --name <storage_account> -o tsv --query id --only-show-errors`
+    get_sa_id_cmd = f"az storage account show --name {storage_account} -o tsv --query id --only-show-errors"
+    response = subprocess.run(get_sa_id_cmd, stdout=PIPE, stderr=PIPE, shell=True, text=True)
     if response.returncode != 0:
-        raise Exception("Failed to get storage account id of " + storage_account + ": " + error.decode("ascii"))
+        raise Exception("Failed to get storage account id of " + storage_account + ": " + str(response.stderr))
+    storage_account_id = response.stdout
 
-    # Equivalent of `az iot ops schema registry create --name $SCHEMA_REGISTRY --resource-group $RESOURCE_GROUP --registry-namespace $SCHEMA_REGISTRY_NAMESPACE --sa-resource-id $STORAGE_ACCOUNT_ID`
-    response = Popen(["az", "iot", "ops", "schema", "registry", "create", "--name", schema_registry, "--resource-group", resource_group_name, "--registry-namespace", schema_registry_namespace, "--sa-resource-id", storage_account_id.strip()], stdout=PIPE, stderr=PIPE)
-    _, error = response.communicate()
+    # `az iot ops schema registry create --name <schema_registry> --resource-group <resource_group_name> --registry-namespace <schema_registry_namespace> --sa-resource-id <storage_account_id> --only-show-errors`
+    create_sr_cmd = f"az iot ops schema registry create --name {schema_registry} --resource-group {resource_group_name} --registry-namespace {schema_registry_namespace} --sa-resource-id {storage_account_id.strip()} --only-show-errors"
+    response = subprocess.run(create_sr_cmd, stdout=PIPE, stderr=PIPE, shell=True)
     if response.returncode != 0:
-        raise Exception("Failed to create schema registry " + schema_registry + ": " + error.decode("ascii"))
+        raise Exception("Failed to create schema registry " + schema_registry + ": " + str(response.stderr))
     
     print("Successfully created schema registry " + schema_registry)
     return
@@ -96,33 +121,35 @@ def setup_schema_registry(storage_account, schema_registry, schema_registry_name
 def install_azure_iot_ops_extension(cluster_name, resource_group_name, schema_registry, custom_location, aio_create_timeout=15*60):
     print("Initializing cluster for installing Azure IoT Operations extension...")
 
-    # Run `az iot ops init` to initialize + prepare cluster for aio ext install
-    # Equivalent of `az iot ops init --cluster $CLUSTER_NAME --resource-group $RESOURCE_GROUP --no-progress`
-    response = Popen(["az", "iot", "ops", "init", "--cluster", cluster_name, "--resource-group", resource_group_name, "--no-progress"], stdout=PIPE, stderr=PIPE)
-    _, error = response.communicate()
+    # `az iot ops init --cluster <cluster_name> --resource-group <resource_group_name> --no-progress --only-show-errors`
+    aio_init_cmd = f"az iot ops init --cluster {cluster_name} --resource-group {resource_group_name} --no-progress --only-show-errors"
+    response = subprocess.run(aio_init_cmd, stdout=PIPE, stderr=PIPE, shell=True)
     if response.returncode != 0:
-        raise Exception("Failed to initialize Azure IoT Operations extension on cluster " + cluster_name + ": " + error.decode("ascii"))
+        raise Exception("Failed to initialize Azure IoT Operations extension on cluster " + cluster_name + ": " + str(response.stderr))
     
-    print("Successfully initialized cluster. Installing Azure IoT Operations extension...")
+    print("Successfully initialized cluster. Getting the schema registry resource ID...")
 
-    # Get the schema registry resource ID
-    # Equivalent of `az iot ops schema registry show --name $SCHEMA_REGISTRY --resource-group $RESOURCE_GROUP -o tsv --query id`
-    response = Popen(["az", "iot", "ops", "schema", "registry", "show", "--name", schema_registry, "--resource-group", resource_group_name, "-o", "tsv", "--query", "id"], stdout=PIPE, stderr=PIPE)
-    schema_registry_id, error = response.communicate()
+    # `az iot ops schema registry show --name <schema_registry> --resource-group <resource_group_name> -o tsv --query id --only-show-errors`
+    get_sr_id_cmd = f"az iot ops schema registry show --name {schema_registry} --resource-group {resource_group_name} -o tsv --query id --only-show-errors"
+    response = subprocess.run(get_sr_id_cmd, stdout=PIPE, stderr=PIPE, shell=True, text=True)
     if response.returncode != 0:
-        raise Exception("Failed to get schema registry id of " + schema_registry + ": " + error.decode("ascii"))
+        raise Exception("Failed to get schema registry id of " + schema_registry + ": " + str(response.stderr))
+    schema_registry_id = response.stdout
 
+    print("Successfully got schema registry resource ID. Installing Azure IoT Operations extension...")
     # Install the Azure IoT Operations extension onto cluster.
         # Note: there is a known issue when trying to install the extension on a Kind cluster.
         # The schema registry portion of the extension will timeout after 30+ minutes and fail to install.
         # But this will not block other parts of AIO installation and the acceptance tests for device registry,
         # so set a timeout cancellation for this step to avoid blocking the rest of the acceptance tests.
     try:
-        # Equivalent of `az iot ops create --cluster $CLUSTER_NAME --resource-group $RESOURCE_GROUP --name ${CLUSTER_NAME}-instance  --sr-resource-id $SCHEMA_REGISTRY_ID --broker-frontend-replicas 1 --broker-frontend-workers 1  --broker-backend-part 1  --broker-backend-workers 1 --broker-backend-rf 2 --broker-mem-profile Low --custom-location $CUSTOM_LOCATION --no-progress --yes`, 
-        # along with a 15 minute timeout using subprocess.run()
-        response = subprocess.run(["az", "iot", "ops", "create", "--cluster", cluster_name, "--resource-group", resource_group_name, "--name", cluster_name + "-instance", "--sr-resource-id", schema_registry_id.strip(), "--broker-frontend-replicas", "1", "--broker-frontend-workers", "1", "--broker-backend-part", "1", "--broker-backend-workers", "1", "--broker-backend-rf", "2", "--broker-mem-profile", "Low", "--custom-location", custom_location, "--no-progress", "--yes"], timeout=aio_create_timeout, stdout=PIPE, stderr=PIPE)
-        # _, error = response.communicate()
+        # `az iot ops create --cluster <cluster_name> --resource-group <resource_group_name> --name <cluster_name>-instance  --sr-resource-id <schema_registry_id> --broker-frontend-replicas 1 --broker-frontend-workers 1  --broker-backend-part 1  --broker-backend-workers 1 --broker-backend-rf 2 --broker-mem-profile Low --custom-location <custom_location> --no-progress --yes --only-show-errors`
+        # Default timeout is 15 minutes.
+        aio_create_cmd = f"az iot ops create --cluster {cluster_name} --resource-group {resource_group_name} --name {cluster_name}-instance  --sr-resource-id {schema_registry_id.strip()} --broker-frontend-replicas 1 --broker-frontend-workers 1  --broker-backend-part 1  --broker-backend-workers 1 --broker-backend-rf 2 --broker-mem-profile Low --custom-location {custom_location} --no-progress --yes --only-show-errors"
+        response = subprocess.run(aio_create_cmd, timeout=aio_create_timeout, stdout=PIPE, stderr=PIPE, shell=True)
         print(response)
+        if response.returncode != 0:
+            raise Exception("Failed to install Azure IoT Operations extension on cluster " + cluster_name + ": " + str(response.stderr))
         print("Successfully installed Azure IoT Operations extension on cluster " + cluster_name)
         return
     except subprocess.TimeoutExpired:
@@ -143,21 +170,14 @@ def setup_aio_arc_enabled_cluster():
     parser.add_argument('--storageAccount', type=str, required=True)
     parser.add_argument('--schemaRegistry', type=str, required=True)
     parser.add_argument('--schemaRegistryNamespace', type=str, required=True)
-    parser.add_argument('--tenantId', type=str, required=True)
-    # parser.add_argument('--privatePem', type=str, required=True)
 
     try:
         args = parser.parse_args()
     except Exception as e:
         raise Exception("Failed to parse arguments." + str(e))
 
-    # try:
-    #     with open(args.privatePem, "r") as f:
-    #         privateKey = f.read()
-    # except Exception as e:
-    #     raise Exception("Failed to get private key." + str(e))
-
-    register_az_providers()
+    # register_az_providers()
+    install_az_extensions()
 
     onboard_k8s_cluster(args.resourceGroupName, args.clusterName, args.location)
 

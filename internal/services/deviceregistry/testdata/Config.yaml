@@ -1,0 +1,3 @@
+write-kubeconfig-mode: "0644"
+cluster-init: true
+etcd-arg: "quota-backend-bytes=8589934592"
