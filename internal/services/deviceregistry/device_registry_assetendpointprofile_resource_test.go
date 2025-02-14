@@ -2,11 +2,6 @@ package deviceregistry_test
 
 import (
 	"context"
-	cryptoRand "crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/base64"
-	"encoding/pem"
 	"fmt"
 	"math/rand"
 	"os"
@@ -52,11 +47,11 @@ type AssetEndpointProfileTestResource struct{}
 func TestAccAssetEndpointProfile_basic(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
-	credential, privateKey, publicKey := r.getCredentials(t)
+	credential := r.getCredentials(t)
 
 	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.basic(data, credential, privateKey, publicKey),
+			Config: r.basic(data, credential),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -73,13 +68,14 @@ func TestAccAssetEndpointProfile_basic(t *testing.T) {
 	})
 }
 
-func testAccAssetEndpointProfile_complete_certificate(t *testing.T) {
+func TestAccAssetEndpointProfile_complete_certificate(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
+	credential := r.getCredentials(t)
 
-	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
+	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.completeCertificate(data),
+			Config: r.completeCertificate(data, credential),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -96,13 +92,14 @@ func testAccAssetEndpointProfile_complete_certificate(t *testing.T) {
 	})
 }
 
-func testAccAssetEndpointProfile_complete_usernamePassword(t *testing.T) {
+func TestAccAssetEndpointProfile_complete_usernamePassword(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
+	credential := r.getCredentials(t)
 
-	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
+	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.completeUsernamePassword(data),
+			Config: r.completeUsernamePassword(data, credential),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -119,13 +116,14 @@ func testAccAssetEndpointProfile_complete_usernamePassword(t *testing.T) {
 	})
 }
 
-func testAccAssetEndpointProfile_complete_anonymous(t *testing.T) {
+func TestAccAssetEndpointProfile_complete_anonymous(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
+	credential := r.getCredentials(t)
 
-	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
+	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.completeAnonymous(data),
+			Config: r.completeAnonymous(data, credential),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -142,39 +140,39 @@ func testAccAssetEndpointProfile_complete_anonymous(t *testing.T) {
 	})
 }
 
-func testAccAssetEndpointProfile_requiresImport(t *testing.T) {
+func TestAccAssetEndpointProfile_requiresImport(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
-	credential, privateKey, publicKey := r.getCredentials(t)
+	credential := r.getCredentials(t)
 
 	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.basic(data, credential, privateKey, publicKey),
+			Config: r.basic(data, credential),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 			),
 		},
 		data.RequiresImportErrorStep(func(data acceptance.TestData) string {
-			return r.requiresImport(data, credential, privateKey, publicKey)
+			return r.requiresImport(data, credential)
 		}),
 	})
 }
 
-func testAccAssetEndpointProfile_update(t *testing.T) {
+func TestAccAssetEndpointProfile_update(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
-	credential, privateKey, publicKey := r.getCredentials(t)
+	credential := r.getCredentials(t)
 
 	data.ResourceTest(t, r, []acceptance.TestStep{
 		{ // first create the resource
-			Config: r.basic(data, credential, privateKey, publicKey),
+			Config: r.basic(data, credential),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 			),
 		},
 		data.ImportStep(),
 		{ // update the authentication method to certificate
-			Config: r.completeCertificate(data),
+			Config: r.completeCertificate(data, credential),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -189,7 +187,7 @@ func testAccAssetEndpointProfile_update(t *testing.T) {
 		},
 		data.ImportStep(),
 		{ // update the authentication method to username/password
-			Config: r.completeUsernamePassword(data),
+			Config: r.completeUsernamePassword(data, credential),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -204,7 +202,7 @@ func testAccAssetEndpointProfile_update(t *testing.T) {
 		},
 		data.ImportStep(),
 		{ // update the authentication method to anonymous
-			Config: r.completeAnonymous(data),
+			Config: r.completeAnonymous(data, credential),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -222,14 +220,14 @@ func testAccAssetEndpointProfile_update(t *testing.T) {
 }
 
 // func testAccAssetEndpointProfile_initializeCluster(t *testing.T) {
-// 	data := acceptance.BuildTestData(t, "azurerm_arc_kubernetes_cluster", "test")
+// 	data := acceptance.BuildTestData(t, "azurerm_linux_virtual_machine", "test")
 // 	r := AssetEndpointProfileTestResource{}
 
-// 	credential, publicKey, privateKey := r.getCredentials(t)
+// 	credential := r.getCredentials(t)
 
 // 	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 // 		{
-// 			Config: r.template(data, credential, privateKey, publicKey),
+// 			Config: r.template(data, credential),
 // 			Check: acceptance.ComposeTestCheckFunc(
 // 				check.That(data.ResourceName).ExistsInAzure(r),
 // 			),
@@ -252,8 +250,8 @@ func (AssetEndpointProfileTestResource) Exists(ctx context.Context, client *clie
 	return utils.Bool(true), nil
 }
 
-func (r AssetEndpointProfileTestResource) basic(data acceptance.TestData, credential string, privateKey string, publicKey string) string {
-	template := r.template(data, credential, privateKey, publicKey)
+func (r AssetEndpointProfileTestResource) basic(data acceptance.TestData, credential string) string {
+	template := r.template(data, credential)
 	return fmt.Sprintf(`
 %s
 
@@ -272,10 +270,13 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 `, template, data.RandomInteger, data.Locations.Primary)
 }
 
-func (AssetEndpointProfileTestResource) completeCertificate(data acceptance.TestData) string {
+func (r AssetEndpointProfileTestResource) completeCertificate(data acceptance.TestData, credential string) string {
+	template := r.template(data, credential)
 	return fmt.Sprintf(`
+%s
+
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name                                     = "acctest-assetendpointprofile-%[1]d"
+	name                                     = "acctest-assetendpointprofile-%[2]d"
 	resource_group_name                      = azurerm_resource_group.test.name
 	// resource_group_name = "adr-terraform-acctest-rg"
 	// extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-acctest-rg/providers/Microsoft.ExtendedLocation/customLocations/{local.custom_location}"
@@ -287,15 +288,18 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	additional_configuration                 = "{\"foo\": \"bar\"}"
 	authentication_method                    = "Certificate"
 	x509_credentials_certificate_secret_name = "myCertificateRef"
-	location                                 = "%[2]s"
+	location                                 = "%[3]s"
 }
-`, data.RandomInteger, data.Locations.Primary)
+`, template, data.RandomInteger, data.Locations.Primary)
 }
 
-func (AssetEndpointProfileTestResource) completeUsernamePassword(data acceptance.TestData) string {
+func (r AssetEndpointProfileTestResource) completeUsernamePassword(data acceptance.TestData, credential string) string {
+	template := r.template(data, credential)
 	return fmt.Sprintf(`
+%s
+
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name                                               = "acctest-assetendpointprofile-%[1]d"
+	name                                               = "acctest-assetendpointprofile-%[2]d"
 	resource_group_name                                = azurerm_resource_group.test.name
 	//resource_group_name = "adr-terraform-acctest-rg"
 	//extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-acctest-rg/providers/Microsoft.ExtendedLocation/customLocations/{local.custom_location}"
@@ -308,87 +312,69 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	authentication_method                              = "UsernamePassword"
 	username_password_credentials_username_secret_name = "myUsernameRef"
 	username_password_credentials_password_secret_name = "myPasswordRef"
-	location                                           = "%[2]s"
+	location                                           = "%[3]s"
 }
-`, data.RandomInteger, data.Locations.Primary)
+`, template, data.RandomInteger, data.Locations.Primary)
 }
 
-func (AssetEndpointProfileTestResource) completeAnonymous(data acceptance.TestData) string {
+func (r AssetEndpointProfileTestResource) completeAnonymous(data acceptance.TestData, credential string) string {
+	template := r.template(data, credential)
 	return fmt.Sprintf(`
+%s
+
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name             = "acctest-assetendpointprofile-%[1]d"
-	// resource_group_name = azurerm_resource_group.test.name
-	resource_group_name = "adr-terraform-acctest-rg"
-	extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-acctest-rg/providers/Microsoft.ExtendedLocation/customLocations/{local.custom_location}"
-	// extended_location_name = "${azurerm_resource_group.test.id}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
-	extended_location_type = "CustomLocation"
-	target_address = "opc.tcp://foo"
-	endpoint_profile_type = "OpcUa"
+	name                                  = "acctest-assetendpointprofile-%[2]d"
+  resource_group_name                   = azurerm_resource_group.test.name
+	// resource_group_name = "adr-terraform-acctest-rg"
+	// extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-acctest-rg/providers/Microsoft.ExtendedLocation/customLocations/{local.custom_location}"
+	extended_location_name                = "${azurerm_resource_group.test.id}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+	extended_location_type                = "CustomLocation"
+	target_address                        = "opc.tcp://foo"
+	endpoint_profile_type                 = "OpcUa"
 	discovered_asset_endpoint_profile_ref = "discoveredAssetEndpointProfile123"
-	additional_configuration = "{\"foo\": \"bar\"}"
-	authentication_method = "Anonymous"
-	location         = "%[2]s"
+	additional_configuration              = "{\"foo\": \"bar\"}"
+	authentication_method                 = "Anonymous"
+	location                              = "%[3]s"
 }
-`, data.RandomInteger, data.Locations.Primary)
+`, template, data.RandomInteger, data.Locations.Primary)
 }
 
-func (r AssetEndpointProfileTestResource) requiresImport(data acceptance.TestData, credential string, privateKey string, publicKey string) string {
-	template := r.basic(data, credential, privateKey, publicKey)
+func (r AssetEndpointProfileTestResource) requiresImport(data acceptance.TestData, credential string) string {
+	template := r.basic(data, credential)
 	return fmt.Sprintf(`
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "import" {
-	name 					 = azurerm_device_registry_asset_endpoint_profile.test.name
-	resource_group_name = azurerm_device_registry_asset_endpoint_profile.test.resource_group_name
-	extended_location_name = azurerm_device_registry_asset_endpoint_profile.test.extended_location_name
-	extended_location_type = azurerm_device_registry_asset_endpoint_profile.test.extended_location_type
-	target_address = azurerm_device_registry_asset_endpoint_profile.test.target_address
-	endpoint_profile_type = azurerm_device_registry_asset_endpoint_profile.test.endpoint_profile_type
+	name 					                        = azurerm_device_registry_asset_endpoint_profile.test.name
+	resource_group_name                   = azurerm_device_registry_asset_endpoint_profile.test.resource_group_name
+	extended_location_name                = azurerm_device_registry_asset_endpoint_profile.test.extended_location_name
+	extended_location_type                = azurerm_device_registry_asset_endpoint_profile.test.extended_location_type
+	target_address                        = azurerm_device_registry_asset_endpoint_profile.test.target_address
+	endpoint_profile_type                 = azurerm_device_registry_asset_endpoint_profile.test.endpoint_profile_type
 	discovered_asset_endpoint_profile_ref = "discoveredAssetEndpointProfile123"
-	location         = azurerm_device_registry_asset_endpoint_profile.test.location
+	location                              = azurerm_device_registry_asset_endpoint_profile.test.location
 }
 
 `, template)
 }
 
-func (r AssetEndpointProfileTestResource) generateKey() (string, string, error) {
-	privateKey, err := rsa.GenerateKey(cryptoRand.Reader, 4096)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to generate RSA key")
-	}
-
-	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
-	privateKeyBlock := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: privateKeyBytes,
-	}
-
-	privatePem := pem.EncodeToMemory(privateKeyBlock)
-	if privatePem == nil {
-		return "", "", fmt.Errorf("failed to encode pem")
-	}
-
-	return string(privatePem), base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)), nil
+// Generates a random password for the VM.
+func (r AssetEndpointProfileTestResource) getCredentials(t *testing.T) string {
+	return fmt.Sprintf("P@$$w0rd%d!", rand.Intn(10000))
 }
 
-func (r AssetEndpointProfileTestResource) getCredentials(t *testing.T) (credential, privateKey, publicKey string) {
-	credential = fmt.Sprintf("P@$$w0rd%d!", rand.Intn(10000))
-	privateKey, publicKey, err := r.generateKey()
-	if err != nil {
-		t.Fatalf("failed to generate key: %+v", err)
-	}
-
-	return
-}
-
-func (r AssetEndpointProfileTestResource) template(data acceptance.TestData, credential string, privateKey string, publicKey string) string {
+/*
+The terraform template for all the resources needed to create an AIO cluster on a VM
+which the acceptance tests' AssetEndpointProfile resources will be provisioned to.
+*/
+func (r AssetEndpointProfileTestResource) template(data acceptance.TestData, credential string) string {
 	clientId := os.Getenv("ARM_CLIENT_ID")
-	provisionTemplate := r.provisionTemplate(data, credential, privateKey)
+	provisionTemplate := r.provisionTemplate(data, credential)
 	return fmt.Sprintf(`
 locals {
-	custom_location = "adr-acctest-cl"
-	storage_account = "acctestsa"
-  schema_registry = "acctestsr"
+	custom_location           = "adr-acctest-cl"
+	storage_account           = "acctestsa"
+  schema_registry           = "acctestsr"
   schema_registry_namespace = "acctestsrn"
 }
 
@@ -398,43 +384,43 @@ provider "azurerm" {
 
 data "azurerm_client_config" "current" {}
 
-// resource "azurerm_resource_group" "test" {
-//   name     = "acctestRG-%[1]d"
-//   location = "%[2]s"
-// }
+resource "azurerm_resource_group" "test" {
+  name     = "acctestRG-%[1]d"
+  location = "%[2]s"
+}
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestnw-%[1]d"
   address_space       = ["10.0.0.0/16"]
-  // location            = azurerm_resource_group.test.location
-	location            = "%[2]s"
-  // resource_group_name = azurerm_resource_group.test.name
-	resource_group_name = "adr-terraform-acctest-rg"
+  location            = azurerm_resource_group.test.location
+	//location            = "%[2]s"
+  resource_group_name = azurerm_resource_group.test.name
+	//resource_group_name = "adr-terraform-acctest-rg"
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "internal"
-  // resource_group_name  = azurerm_resource_group.test.name
-	resource_group_name = "adr-terraform-acctest-rg"
+  resource_group_name  = azurerm_resource_group.test.name
+	// resource_group_name = "adr-terraform-acctest-rg"
   virtual_network_name = azurerm_virtual_network.test.name
   address_prefixes     = ["10.0.2.0/24"]
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%[1]d"
-  // location            = azurerm_resource_group.test.location
-  // resource_group_name = azurerm_resource_group.test.name
-	location            = "%[2]s"
-	resource_group_name = "adr-terraform-acctest-rg"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+	// location            = "%[2]s"
+	// resource_group_name = "adr-terraform-acctest-rg"
   allocation_method   = "Static"
 }
 
 resource "azurerm_network_interface" "test" {
   name                = "acctestnic-%[1]d"
-  // location            = azurerm_resource_group.test.location
-  // resource_group_name = azurerm_resource_group.test.name
-	location            = "%[2]s"
-	resource_group_name = "adr-terraform-acctest-rg"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+	//location            = "%[2]s"
+	// resource_group_name = "adr-terraform-acctest-rg"
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.test.id
@@ -445,10 +431,10 @@ resource "azurerm_network_interface" "test" {
 
 resource "azurerm_network_security_group" "my_terraform_nsg" {
   name                = "myNetworkSG-%[1]d"
-  // location            = azurerm_resource_group.test.location
-  // resource_group_name = azurerm_resource_group.test.name
-	location            = "%[2]s"
-	resource_group_name = "adr-terraform-acctest-rg"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+	// location            = "%[2]s"
+	// resource_group_name = "adr-terraform-acctest-rg"
   security_rule {
     name                       = "SSH"
     priority                   = 1001
@@ -475,10 +461,10 @@ resource "azurerm_network_interface_security_group_association" "test" {
 
 resource "azurerm_linux_virtual_machine" "test" {
   name                            = "acctestVM-%[1]d"
-  // resource_group_name             = azurerm_resource_group.test.name
-  // location                        = azurerm_resource_group.test.location
-	resource_group_name             = "adr-terraform-acctest-rg"
-	location                        = "%[2]s"
+  resource_group_name             = azurerm_resource_group.test.name
+  location                        = azurerm_resource_group.test.location
+	//resource_group_name             = "adr-terraform-acctest-rg"
+	//location                        = "%[2]s"
   size                            = "Standard_F2"
   admin_username                  = "adminuser"
   admin_password                  = "%[3]s"
@@ -502,40 +488,29 @@ resource "azurerm_linux_virtual_machine" "test" {
 	identity {
 		type = "SystemAssigned, UserAssigned"
 		identity_ids = [
-			%[6]s
+			%[5]s
 		]
 	}
+
+	%[4]s
 
   depends_on = [
     azurerm_network_interface_security_group_association.test
   ]
 }
-
-resource "azurerm_arc_kubernetes_cluster" "test" {
-  name                         = "acctest-akcc-%[1]d"
-  // resource_group_name          = azurerm_resource_group.test.name
-  // location                     = azurerm_resource_group.test.location
-	resource_group_name          = "adr-terraform-acctest-rg"
-	location                     = "%[2]s"
-  agent_public_key_certificate = "%[4]s"
-  identity {
-    type = "SystemAssigned"
-  }
-
-  %[5]s
-
-  depends_on = [
-    azurerm_linux_virtual_machine.test
-  ]
-}
-`, data.RandomInteger, data.Locations.Primary, credential, publicKey, provisionTemplate, clientId)
+`, data.RandomInteger, data.Locations.Primary, credential, provisionTemplate, clientId)
 }
 
-func (r AssetEndpointProfileTestResource) provisionTemplate(data acceptance.TestData, credential string, privateKey string) string {
+/*
+Copies the scripts and files needed to create and provision the AIO cluster on the VM.
+Then ssh's into the VM and executes the cluster setup scripts.
+In case of errors during remote execution of scripts, the logs are written to a file `agent_log` on the VM.
+*/
+func (r AssetEndpointProfileTestResource) provisionTemplate(data acceptance.TestData, credential string) string {
 	// Get client secrets from env vars because we need them 
-	// to remote execute az cli commands on the VM & k8s cluster.
+	// to remote execute az cli commands on the VM.
 	clientId := os.Getenv("ARM_CLIENT_ID")
-	clientSecret := "foo" // os.Getenv("ARM_CLIENT_SECRET")
+	clientSecret := os.Getenv("ARM_CLIENT_SECRET")
 	
 	return fmt.Sprintf(`
 connection {
@@ -548,18 +523,18 @@ connection {
 provisioner "file" {
  content = templatefile("testdata/setup_aio_cluster.sh.tftpl", {
    subscription_id     = data.azurerm_client_config.current.subscription_id
-  //  resource_group_name = azurerm_resource_group.test.name
-	 resource_group_name = "adr-terraform-acctest-rg"
+   resource_group_name = azurerm_resource_group.test.name
+	 //resource_group_name = "adr-terraform-acctest-rg"
    cluster_name        = "acctest-akcc-%[2]d"
-  //  location            = azurerm_resource_group.test.location
-	 location            = "westus2"
+   location            = azurerm_resource_group.test.location
+	 //location            = "westus2"
 	 custom_location     = local.custom_location
 	 storage_account     = local.storage_account
 	 schema_registry     = local.schema_registry
 	 schema_registry_namespace = local.schema_registry_namespace
    tenant_id           = data.azurerm_client_config.current.tenant_id
-	 client_id           = "%[5]s"
-	 client_secret       = "%[6]s"
+	 client_id           = "%[4]s"
+	 client_secret       = "%[5]s"
    working_dir         = "%[3]s"
  })
  destination = "%[3]s/setup_aio_cluster.sh"
@@ -570,18 +545,6 @@ provisioner "file" {
  destination = "%[3]s/setup_aio_cluster.py"
 }
 
-provisioner "file" {
- source      = "testdata/kind.yaml"
- destination = "%[3]s/kind.yaml"
-}
-
-provisioner "file" {
- content     = <<EOT
-%[4]s
-EOT
- destination = "%[3]s/private.pem"
-}
-
 provisioner "remote-exec" {
  inline = [
    "sudo sed -i 's/\r$//' %[3]s/setup_aio_cluster.sh",
@@ -589,5 +552,5 @@ provisioner "remote-exec" {
    "bash %[3]s/setup_aio_cluster.sh > %[3]s/agent_log",
  ]
 }
-`, credential, data.RandomInteger, "/home/adminuser", privateKey, clientId, clientSecret)
+`, credential, data.RandomInteger, "/home/adminuser", clientId, clientSecret)
 }
