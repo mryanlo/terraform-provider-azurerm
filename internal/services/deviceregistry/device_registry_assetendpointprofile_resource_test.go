@@ -18,40 +18,53 @@ import (
 
 type AssetEndpointProfileTestResource struct{}
 
-// func TestAssetEndpointProfileResource(t *testing.T) {
-// 	// Setup arc enabled cluster with Azure IoT Operations extension installed.
+func TestAssetEndpointProfileResource(t *testing.T) {
+	// Run all the acceptance tests for the AssetEndpointProfile resource on the cluster.
+	// NOTE: this is a combined test rather than separate split out tests due to
+	// AssetEndpointProfile resources must be provisioned to the arc-enabled AIO cluster
+	// and avoid creating the cluster multiple times.
+	testCases := map[string]map[string]func(t *testing.T, randomInteger int){
+		// Run the AIO cluster initialization first.
+		"InitializeAioCluster": {
+			"initializeCluster": testAccAssetEndpointProfile_initializeCluster,
+		},
+		// Run the acceptance tests for the AssetEndpointProfile resource
+		"Resource": {
+			"basic":          testAccAssetEndpointProfile_basic,
+			"requiresImport": testAccAssetEndpointProfile_requiresImport,
+			"completeCertificate":       testAccAssetEndpointProfile_complete_certificate,
+			"completeUsernamePassword":  testAccAssetEndpointProfile_complete_usernamePassword,
+			"completeAnonymous":         testAccAssetEndpointProfile_complete_anonymous,
+			"update":         testAccAssetEndpointProfile_update,
+		},
+	}
 
-// 	// Run all the acceptance tests for the AssetEndpointProfile resource on the cluster.
-// 	// NOTE: this is a combined test rather than separate split out tests due to
-// 	// AssetEndpointProfile resources must be provisioned to the arc-enabled AIO cluster
-// 	// and avoid creating the cluster multiple times.
-// 	testCases := map[string]map[string]func(t *testing.T){
-// 		// Run the AIO cluster initialization first.
-// 		"InitializeAioCluster": {
-// 			"initializeCluster": testAccAssetEndpointProfile_initializeCluster,
-// 		},
-// 		// Run the acceptance tests for the AssetEndpointProfile resource
-// 		"Resource": {
-// 			"basic":          testAccAssetEndpointProfile_basic,
-// 			"requiresImport": testAccAssetEndpointProfile_requiresImport,
-// 			"completeCertificate":       testAccAssetEndpointProfile_complete_certificate,
-// 			"completeUsernamePassword":  testAccAssetEndpointProfile_complete_usernamePassword,
-// 			"completeAnonymous":         testAccAssetEndpointProfile_complete_anonymous,
-// 			"update":         testAccAssetEndpointProfile_update,
-// 		},
-// 	}
+	// Generate a random integer of size 18 that will stay the same in all test cases.
+	// This value will be used to create unique names for the AIO cluster's infra resources
+	// (such as the resource group name, VM name, etc) but will be kept constant
+	// so that the same cluster is used for all the acceptance tests.
+	constantRandomInt := acceptance.RandTimeInt()
 
-// 	acceptance.RunTestsInSequence(t, testCases)
-// }
+	for group, m := range testCases {
+		m := m
+		t.Run(group, func(t *testing.T) {
+			for name, tc := range m {
+				tc := tc
+				t.Run(name, func(t *testing.T) {
+					tc(t, constantRandomInt)
+				})
+			}
+		})
+	}
+}
 
-func TestAccAssetEndpointProfile_basic(t *testing.T) {
+func testAccAssetEndpointProfile_basic(t *testing.T, randomInteger int) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
-	credential := r.getCredentials(t)
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.basic(data, credential),
+			Config: r.basic(data, randomInteger),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -68,14 +81,13 @@ func TestAccAssetEndpointProfile_basic(t *testing.T) {
 	})
 }
 
-func TestAccAssetEndpointProfile_complete_certificate(t *testing.T) {
+func testAccAssetEndpointProfile_complete_certificate(t *testing.T, randomInteger int) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
-	credential := r.getCredentials(t)
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.completeCertificate(data, credential),
+			Config: r.completeCertificate(data, randomInteger),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -92,14 +104,13 @@ func TestAccAssetEndpointProfile_complete_certificate(t *testing.T) {
 	})
 }
 
-func TestAccAssetEndpointProfile_complete_usernamePassword(t *testing.T) {
+func testAccAssetEndpointProfile_complete_usernamePassword(t *testing.T, randomInteger int) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
-	credential := r.getCredentials(t)
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.completeUsernamePassword(data, credential),
+			Config: r.completeUsernamePassword(data, randomInteger),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -116,14 +127,13 @@ func TestAccAssetEndpointProfile_complete_usernamePassword(t *testing.T) {
 	})
 }
 
-func TestAccAssetEndpointProfile_complete_anonymous(t *testing.T) {
+func testAccAssetEndpointProfile_complete_anonymous(t *testing.T, randomInteger int) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
-	credential := r.getCredentials(t)
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.completeAnonymous(data, credential),
+			Config: r.completeAnonymous(data, randomInteger),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -140,39 +150,37 @@ func TestAccAssetEndpointProfile_complete_anonymous(t *testing.T) {
 	})
 }
 
-func TestAccAssetEndpointProfile_requiresImport(t *testing.T) {
+func testAccAssetEndpointProfile_requiresImport(t *testing.T, randomInteger int) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
-	credential := r.getCredentials(t)
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.basic(data, credential),
+			Config: r.basic(data, randomInteger),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 			),
 		},
 		data.RequiresImportErrorStep(func(data acceptance.TestData) string {
-			return r.requiresImport(data, credential)
+			return r.requiresImport(data, randomInteger)
 		}),
 	})
 }
 
-func TestAccAssetEndpointProfile_update(t *testing.T) {
+func testAccAssetEndpointProfile_update(t *testing.T, randomInteger int) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
-	credential := r.getCredentials(t)
 
-	data.ResourceTest(t, r, []acceptance.TestStep{
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{ // first create the resource
-			Config: r.basic(data, credential),
+			Config: r.basic(data, randomInteger),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 			),
 		},
 		data.ImportStep(),
 		{ // update the authentication method to certificate
-			Config: r.completeCertificate(data, credential),
+			Config: r.completeCertificate(data, randomInteger),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -187,7 +195,7 @@ func TestAccAssetEndpointProfile_update(t *testing.T) {
 		},
 		data.ImportStep(),
 		{ // update the authentication method to username/password
-			Config: r.completeUsernamePassword(data, credential),
+			Config: r.completeUsernamePassword(data, randomInteger),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -202,7 +210,7 @@ func TestAccAssetEndpointProfile_update(t *testing.T) {
 		},
 		data.ImportStep(),
 		{ // update the authentication method to anonymous
-			Config: r.completeAnonymous(data, credential),
+			Config: r.completeAnonymous(data, randomInteger),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 				check.That(data.ResourceName).Key("target_address").HasValue("opc.tcp://foo"),
@@ -219,21 +227,19 @@ func TestAccAssetEndpointProfile_update(t *testing.T) {
 	})
 }
 
-// func testAccAssetEndpointProfile_initializeCluster(t *testing.T) {
-// 	data := acceptance.BuildTestData(t, "azurerm_linux_virtual_machine", "test")
-// 	r := AssetEndpointProfileTestResource{}
+func testAccAssetEndpointProfile_initializeCluster(t *testing.T, randomInteger int) {
+	data := acceptance.BuildTestData(t, "azurerm_linux_virtual_machine", "test")
+	r := AssetEndpointProfileTestResource{}
 
-// 	credential := r.getCredentials(t)
-
-// 	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
-// 		{
-// 			Config: r.template(data, credential),
-// 			Check: acceptance.ComposeTestCheckFunc(
-// 				check.That(data.ResourceName).ExistsInAzure(r),
-// 			),
-// 		},
-// 	})
-// }
+	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
+		{
+			Config: r.template(data, randomInteger),
+			Check: acceptance.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+			),
+		},
+	})
+}
 
 func (AssetEndpointProfileTestResource) Exists(ctx context.Context, client *clients.Client, state *pluginsdk.InstanceState) (*bool, error) {
 	id, err := assetendpointprofiles.ParseAssetEndpointProfileID(state.ID)
@@ -250,16 +256,16 @@ func (AssetEndpointProfileTestResource) Exists(ctx context.Context, client *clie
 	return utils.Bool(true), nil
 }
 
-func (r AssetEndpointProfileTestResource) basic(data acceptance.TestData, credential string) string {
-	template := r.template(data, credential)
+func (r AssetEndpointProfileTestResource) basic(data acceptance.TestData, randomInteger int) string {
+	template := r.constantsTemplate(data, randomInteger)
+	
+	// AssetEndpointProfile can have different random int for the name. Only AIO cluster infra needs to have the same random int.
 	return fmt.Sprintf(`
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name                                  = "acctest-assetendpointprofile-%[2]d"
 	resource_group_name                   = azurerm_resource_group.test.name
-	// resource_group_name = "adr-terraform-acctest-rg"
-	// extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-acctest-rg/providers/Microsoft.ExtendedLocation/customLocations/{local.custom_location}"
 	extended_location_name                = "${azurerm_resource_group.test.id}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
 	extended_location_type                = "CustomLocation"
 	target_address                        = "opc.tcp://foo"
@@ -270,16 +276,16 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 `, template, data.RandomInteger, data.Locations.Primary)
 }
 
-func (r AssetEndpointProfileTestResource) completeCertificate(data acceptance.TestData, credential string) string {
-	template := r.template(data, credential)
+func (r AssetEndpointProfileTestResource) completeCertificate(data acceptance.TestData, randomInteger int) string {
+	template := r.constantsTemplate(data, randomInteger)
+
+	// AssetEndpointProfile can have different random int for the name. Only AIO cluster infra needs to have the same random int.
 	return fmt.Sprintf(`
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name                                     = "acctest-assetendpointprofile-%[2]d"
 	resource_group_name                      = azurerm_resource_group.test.name
-	// resource_group_name = "adr-terraform-acctest-rg"
-	// extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-acctest-rg/providers/Microsoft.ExtendedLocation/customLocations/{local.custom_location}"
 	extended_location_name                   = "${azurerm_resource_group.test.id}/providers/Microsoft.ExtendedLocation/customLocations/{local.custom_location}"
 	extended_location_type                   = "CustomLocation"
 	target_address                           = "opc.tcp://foo"
@@ -293,16 +299,16 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 `, template, data.RandomInteger, data.Locations.Primary)
 }
 
-func (r AssetEndpointProfileTestResource) completeUsernamePassword(data acceptance.TestData, credential string) string {
-	template := r.template(data, credential)
+func (r AssetEndpointProfileTestResource) completeUsernamePassword(data acceptance.TestData, randomInteger int) string {
+	template := r.constantsTemplate(data, randomInteger)
+
+	// AssetEndpointProfile can have different random int for the name. Only AIO cluster infra needs to have the same random int.
 	return fmt.Sprintf(`
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name                                               = "acctest-assetendpointprofile-%[2]d"
 	resource_group_name                                = azurerm_resource_group.test.name
-	//resource_group_name = "adr-terraform-acctest-rg"
-	//extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-acctest-rg/providers/Microsoft.ExtendedLocation/customLocations/{local.custom_location}"
 	extended_location_name                             = "${azurerm_resource_group.test.id}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
 	extended_location_type                             = "CustomLocation"
 	target_address                                     = "opc.tcp://foo"
@@ -317,16 +323,16 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 `, template, data.RandomInteger, data.Locations.Primary)
 }
 
-func (r AssetEndpointProfileTestResource) completeAnonymous(data acceptance.TestData, credential string) string {
-	template := r.template(data, credential)
+func (r AssetEndpointProfileTestResource) completeAnonymous(data acceptance.TestData, randomInteger int) string {
+	template := r.constantsTemplate(data, randomInteger)
+
+	// AssetEndpointProfile can have different random int for the name. Only AIO cluster infra needs to have the same random int.
 	return fmt.Sprintf(`
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 	name                                  = "acctest-assetendpointprofile-%[2]d"
   resource_group_name                   = azurerm_resource_group.test.name
-	// resource_group_name = "adr-terraform-acctest-rg"
-	// extended_location_name = "/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-acctest-rg/providers/Microsoft.ExtendedLocation/customLocations/{local.custom_location}"
 	extended_location_name                = "${azurerm_resource_group.test.id}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
 	extended_location_type                = "CustomLocation"
 	target_address                        = "opc.tcp://foo"
@@ -339,8 +345,8 @@ resource "azurerm_device_registry_asset_endpoint_profile" "test" {
 `, template, data.RandomInteger, data.Locations.Primary)
 }
 
-func (r AssetEndpointProfileTestResource) requiresImport(data acceptance.TestData, credential string) string {
-	template := r.basic(data, credential)
+func (r AssetEndpointProfileTestResource) requiresImport(data acceptance.TestData, randomInteger int) string {
+	template := r.basic(data, randomInteger)
 	return fmt.Sprintf(`
 %s
 
@@ -358,24 +364,20 @@ resource "azurerm_device_registry_asset_endpoint_profile" "import" {
 `, template)
 }
 
-// Generates a random password for the VM.
-func (r AssetEndpointProfileTestResource) getCredentials(t *testing.T) string {
-	return fmt.Sprintf("P@$$w0rd%d!", rand.Intn(10000))
-}
-
 /*
-The terraform template for all the resources needed to create an AIO cluster on a VM
-which the acceptance tests' AssetEndpointProfile resources will be provisioned to.
+Creates the terraform template for constants needed for the AIO cluster infra.
 */
-func (r AssetEndpointProfileTestResource) template(data acceptance.TestData, credential string) string {
-	clientId := os.Getenv("ARM_CLIENT_ID")
-	provisionTemplate := r.provisionTemplate(data, credential)
+func (AssetEndpointProfileTestResource) constantsTemplate(data acceptance.TestData, randomInteger int) string {
+	// Trim the random value (from acceptance.RandTimeInt which is 18 digits) to 10 digits
+	// to avoid exceeding the maximum length of the storage account name (24 chars max).
+	trimmedRandomInteger := randomInteger % 10000000000
 	return fmt.Sprintf(`
 locals {
-	custom_location           = "adr-acctest-cl"
-	storage_account           = "acctestsa"
-  schema_registry           = "acctestsr"
-  schema_registry_namespace = "acctestsrn"
+	custom_location           = "adr-acctest-cl%[1]d"
+	storage_account           = "acctestsa%[2]d"
+	schema_registry           = "acctest-sr-%[1]d"
+	schema_registry_namespace = "acctests-rn-%[1]d"
+	resource_group_name       = "adr-acctest-rg-%[1]d"
 }
 
 provider "azurerm" {
@@ -383,9 +385,24 @@ provider "azurerm" {
 }
 
 data "azurerm_client_config" "current" {}
+`, randomInteger, trimmedRandomInteger)
+}
+
+/*
+The terraform template for all the resources needed to create an AIO cluster on a VM
+which the acceptance tests' AssetEndpointProfile resources will be provisioned to.
+*/
+func (r AssetEndpointProfileTestResource) template(data acceptance.TestData, randomInteger int) string {
+	clientId := os.Getenv("ARM_CLIENT_ID")
+	constantsTemplate := r.constantsTemplate(data, randomInteger)
+	credential := r.getCredentials()
+	provisionTemplate := r.provisionTemplate(data, credential, randomInteger)
+
+	return fmt.Sprintf(`
+%[5]s
 
 resource "azurerm_resource_group" "test" {
-  name     = "acctestRG-%[1]d"
+  name     = local.resource_group_name
   location = "%[2]s"
 }
 
@@ -393,15 +410,12 @@ resource "azurerm_virtual_network" "test" {
   name                = "acctestnw-%[1]d"
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.test.location
-	//location            = "%[2]s"
   resource_group_name = azurerm_resource_group.test.name
-	//resource_group_name = "adr-terraform-acctest-rg"
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "internal"
   resource_group_name  = azurerm_resource_group.test.name
-	// resource_group_name = "adr-terraform-acctest-rg"
   virtual_network_name = azurerm_virtual_network.test.name
   address_prefixes     = ["10.0.2.0/24"]
 }
@@ -410,8 +424,6 @@ resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%[1]d"
   location            = azurerm_resource_group.test.location
   resource_group_name = azurerm_resource_group.test.name
-	// location            = "%[2]s"
-	// resource_group_name = "adr-terraform-acctest-rg"
   allocation_method   = "Static"
 }
 
@@ -419,8 +431,6 @@ resource "azurerm_network_interface" "test" {
   name                = "acctestnic-%[1]d"
   location            = azurerm_resource_group.test.location
   resource_group_name = azurerm_resource_group.test.name
-	//location            = "%[2]s"
-	// resource_group_name = "adr-terraform-acctest-rg"
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.test.id
@@ -433,8 +443,6 @@ resource "azurerm_network_security_group" "my_terraform_nsg" {
   name                = "myNetworkSG-%[1]d"
   location            = azurerm_resource_group.test.location
   resource_group_name = azurerm_resource_group.test.name
-	// location            = "%[2]s"
-	// resource_group_name = "adr-terraform-acctest-rg"
   security_rule {
     name                       = "SSH"
     priority                   = 1001
@@ -488,7 +496,7 @@ resource "azurerm_linux_virtual_machine" "test" {
 	identity {
 		type = "SystemAssigned, UserAssigned"
 		identity_ids = [
-			%[5]s
+			%[6]s
 		]
 	}
 
@@ -498,7 +506,7 @@ resource "azurerm_linux_virtual_machine" "test" {
     azurerm_network_interface_security_group_association.test
   ]
 }
-`, data.RandomInteger, data.Locations.Primary, credential, provisionTemplate, clientId)
+`, randomInteger, data.Locations.Primary, credential, provisionTemplate, constantsTemplate, clientId)
 }
 
 /*
@@ -506,7 +514,7 @@ Copies the scripts and files needed to create and provision the AIO cluster on t
 Then ssh's into the VM and executes the cluster setup scripts.
 In case of errors during remote execution of scripts, the logs are written to a file `agent_log` on the VM.
 */
-func (r AssetEndpointProfileTestResource) provisionTemplate(data acceptance.TestData, credential string) string {
+func (r AssetEndpointProfileTestResource) provisionTemplate(data acceptance.TestData, credential string, randomInteger int) string {
 	// Get client secrets from env vars because we need them 
 	// to remote execute az cli commands on the VM.
 	clientId := os.Getenv("ARM_CLIENT_ID")
@@ -524,10 +532,8 @@ provisioner "file" {
  content = templatefile("testdata/setup_aio_cluster.sh.tftpl", {
    subscription_id     = data.azurerm_client_config.current.subscription_id
    resource_group_name = azurerm_resource_group.test.name
-	 //resource_group_name = "adr-terraform-acctest-rg"
    cluster_name        = "acctest-akcc-%[2]d"
    location            = azurerm_resource_group.test.location
-	 //location            = "westus2"
 	 custom_location     = local.custom_location
 	 storage_account     = local.storage_account
 	 schema_registry     = local.schema_registry
@@ -553,4 +559,9 @@ provisioner "remote-exec" {
  ]
 }
 `, credential, data.RandomInteger, "/home/adminuser", clientId, clientSecret)
+}
+
+// Generates a random password for the VM.
+func (AssetEndpointProfileTestResource) getCredentials() string {
+	return fmt.Sprintf("P@$$w0rd%d!", rand.Intn(10000))
 }
