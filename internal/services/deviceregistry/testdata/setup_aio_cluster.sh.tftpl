@@ -1,22 +1,27 @@
 #!/bin/bash
 
 # Install k3s and setup k3s kubernetes cluster
+printf "Installing k3s and setting up k3s kubernetes cluster...\n"
 curl -sfL https://get.k3s.io | K3S_CONFIG_FILE=~/Config.yaml sh -s - # Runs k3s server with storage settings so AIO installation can succeed
 sudo chmod 777 /etc/rancher/k3s/k3s.yaml # enable access to the kube-config file so az cli commands can run
 
 # Install az cli:
+printf "Installing az cli.\n"
 
 ## Get required packages for az cli installation
+printf "Getting required packages for az cli installation...\n"
 sudo apt-get update
 sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release
 
-## Download and install microsoft signing key
+## Download and install Microsoft signing key
+printf "Downloading and installing Microsoft signing key...\n"
 sudo mkdir -p /etc/apt/keyrings
 curl -sLS https://packages.microsoft.com/keys/microsoft.asc |
   gpg --dearmor | sudo tee /etc/apt/keyrings/microsoft.gpg > /dev/null
 sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
 
 ## Add az cli software repository
+printf "Adding az cli software repository...\n"
 echo "Types: deb
 URIs: https://packages.microsoft.com/repos/azure-cli/
 Suites: $(lsb_release -cs)
@@ -25,10 +30,12 @@ Architectures: $(dpkg --print-architecture)
 Signed-by: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/azure-cli.sources
 
 ## Install version 2.68.0
+printf "Installing az cli version 2.68.0...\n"
 sudo apt-get update
 sudo apt-get install azure-cli=2.68.0-1~$(lsb_release -cs)
 
 # Login with az cli
+printf "Logging in with az cli...\n"
 ## Login with service principal. Comment this line if you want to login with managed identity
 # az login --username "${client_id}" --password "${client_secret}" --service-principal --tenant "${tenant_id}"
 
@@ -36,6 +43,7 @@ sudo apt-get install azure-cli=2.68.0-1~$(lsb_release -cs)
 az login --identity --username "${client_id}"
 
 # Configure cluster and install Azure IoT Operations extension for the tests:
+printf "Running python script to configuring cluster and installing Azure IoT Operations extension for the tests...\n"
 python3 "${working_dir}/setup_aio_cluster.py" \
 --subscriptionId "${subscription_id}" \
 --resourceGroupName "${resource_group_name}" \
@@ -45,3 +53,5 @@ python3 "${working_dir}/setup_aio_cluster.py" \
 --storageAccount "${storage_account}" \
 --schemaRegistry "${schema_registry}" \
 --schemaRegistryNamespace "${schema_registry_namespace}"
+
+printf "Setup completed successfully.\n"
