@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/deviceregistry/2024-11-01/assetendpointprofiles"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/acceptance"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/acceptance/check"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/deviceregistry/2024-11-01/assetendpointprofiles"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
@@ -30,12 +30,12 @@ func TestAssetEndpointProfileResource(t *testing.T) {
 		},
 		// Run the acceptance tests for the AssetEndpointProfile resource
 		"Resource": {
-			"basic":          testAccAssetEndpointProfile_basic,
-			"requiresImport": testAccAssetEndpointProfile_requiresImport,
-			"completeCertificate":       testAccAssetEndpointProfile_complete_certificate,
-			"completeUsernamePassword":  testAccAssetEndpointProfile_complete_usernamePassword,
-			"completeAnonymous":         testAccAssetEndpointProfile_complete_anonymous,
-			"update":         testAccAssetEndpointProfile_update,
+			"basic":                    testAccAssetEndpointProfile_basic,
+			"requiresImport":           testAccAssetEndpointProfile_requiresImport,
+			"completeCertificate":      testAccAssetEndpointProfile_complete_certificate,
+			"completeUsernamePassword": testAccAssetEndpointProfile_complete_usernamePassword,
+			"completeAnonymous":        testAccAssetEndpointProfile_complete_anonymous,
+			"update":                   testAccAssetEndpointProfile_update,
 		},
 	}
 
@@ -238,6 +238,9 @@ func testAccAssetEndpointProfile_initializeCluster(t *testing.T, randomInteger i
 				check.That(data.ResourceName).ExistsInAzure(r),
 			),
 		},
+		{
+			Config: r.preventTemplateDeletion(),
+		},
 	})
 }
 
@@ -258,20 +261,20 @@ func (AssetEndpointProfileTestResource) Exists(ctx context.Context, client *clie
 
 func (r AssetEndpointProfileTestResource) basic(data acceptance.TestData, randomInteger int) string {
 	template := r.constantsTemplate(data, randomInteger)
-	
+
 	// AssetEndpointProfile can have different random int for the name. Only AIO cluster infra needs to have the same random int.
 	return fmt.Sprintf(`
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name                                  = "acctest-assetendpointprofile-%[2]d"
-	resource_group_name                   = local.resource_group_name
-	extended_location_name                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
-	extended_location_type                = "CustomLocation"
-	target_address                        = "opc.tcp://foo"
-	endpoint_profile_type                 = "OpcUa"
-	discovered_asset_endpoint_profile_ref = "discoveredAssetEndpointProfile123"
-	location                              = "%[3]s"
+  name                                  = "acctest-assetendpointprofile-%[2]d"
+  resource_group_name                   = local.resource_group_name
+  extended_location_name                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  extended_location_type                = "CustomLocation"
+  target_address                        = "opc.tcp://foo"
+  endpoint_profile_type                 = "OpcUa"
+  discovered_asset_endpoint_profile_ref = "discoveredAssetEndpointProfile123"
+  location                              = "%[3]s"
 }
 `, template, data.RandomInteger, data.Locations.Primary)
 }
@@ -284,17 +287,17 @@ func (r AssetEndpointProfileTestResource) completeCertificate(data acceptance.Te
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name                                     = "acctest-assetendpointprofile-%[2]d"
-	resource_group_name                      = local.resource_group_name
-	extended_location_name                   = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
-	extended_location_type                   = "CustomLocation"
-	target_address                           = "opc.tcp://foo"
-	endpoint_profile_type                    = "OpcUa"
-	discovered_asset_endpoint_profile_ref    = "discoveredAssetEndpointProfile123"
-	additional_configuration                 = "{\"foo\": \"bar\"}"
-	authentication_method                    = "Certificate"
-	x509_credentials_certificate_secret_name = "myCertificateRef"
-	location                                 = "%[3]s"
+  name                                     = "acctest-assetendpointprofile-%[2]d"
+  resource_group_name                      = local.resource_group_name
+  extended_location_name                   = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  extended_location_type                   = "CustomLocation"
+  target_address                           = "opc.tcp://foo"
+  endpoint_profile_type                    = "OpcUa"
+  discovered_asset_endpoint_profile_ref    = "discoveredAssetEndpointProfile123"
+  additional_configuration                 = "{\"foo\": \"bar\"}"
+  authentication_method                    = "Certificate"
+  x509_credentials_certificate_secret_name = "myCertificateRef"
+  location                                 = "%[3]s"
 }
 `, template, data.RandomInteger, data.Locations.Primary)
 }
@@ -307,18 +310,18 @@ func (r AssetEndpointProfileTestResource) completeUsernamePassword(data acceptan
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name                                               = "acctest-assetendpointprofile-%[2]d"
-	resource_group_name                                = local.resource_group_name
-	extended_location_name                             = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
-	extended_location_type                             = "CustomLocation"
-	target_address                                     = "opc.tcp://foo"
-	endpoint_profile_type                              = "OpcUa"
-	discovered_asset_endpoint_profile_ref              = "discoveredAssetEndpointProfile123"
-	additional_configuration                           = "{\"foo\": \"bar\"}"
-	authentication_method                              = "UsernamePassword"
-	username_password_credentials_username_secret_name = "myUsernameRef"
-	username_password_credentials_password_secret_name = "myPasswordRef"
-	location                                           = "%[3]s"
+  name                                               = "acctest-assetendpointprofile-%[2]d"
+  resource_group_name                                = local.resource_group_name
+  extended_location_name                             = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  extended_location_type                             = "CustomLocation"
+  target_address                                     = "opc.tcp://foo"
+  endpoint_profile_type                              = "OpcUa"
+  discovered_asset_endpoint_profile_ref              = "discoveredAssetEndpointProfile123"
+  additional_configuration                           = "{\"foo\": \"bar\"}"
+  authentication_method                              = "UsernamePassword"
+  username_password_credentials_username_secret_name = "myUsernameRef"
+  username_password_credentials_password_secret_name = "myPasswordRef"
+  location                                           = "%[3]s"
 }
 `, template, data.RandomInteger, data.Locations.Primary)
 }
@@ -331,16 +334,16 @@ func (r AssetEndpointProfileTestResource) completeAnonymous(data acceptance.Test
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
-	name                                  = "acctest-assetendpointprofile-%[2]d"
+  name                                  = "acctest-assetendpointprofile-%[2]d"
   resource_group_name                   = local.resource_group_name
-	extended_location_name                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
-	extended_location_type                = "CustomLocation"
-	target_address                        = "opc.tcp://foo"
-	endpoint_profile_type                 = "OpcUa"
-	discovered_asset_endpoint_profile_ref = "discoveredAssetEndpointProfile123"
-	additional_configuration              = "{\"foo\": \"bar\"}"
-	authentication_method                 = "Anonymous"
-	location                              = "%[3]s"
+  extended_location_name                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  extended_location_type                = "CustomLocation"
+  target_address                        = "opc.tcp://foo"
+  endpoint_profile_type                 = "OpcUa"
+  discovered_asset_endpoint_profile_ref = "discoveredAssetEndpointProfile123"
+  additional_configuration              = "{\"foo\": \"bar\"}"
+  authentication_method                 = "Anonymous"
+  location                              = "%[3]s"
 }
 `, template, data.RandomInteger, data.Locations.Primary)
 }
@@ -351,15 +354,16 @@ func (r AssetEndpointProfileTestResource) requiresImport(data acceptance.TestDat
 %s
 
 resource "azurerm_device_registry_asset_endpoint_profile" "import" {
-	name 					                        = azurerm_device_registry_asset_endpoint_profile.test.name
-	resource_group_name                   = azurerm_device_registry_asset_endpoint_profile.test.resource_group_name
-	extended_location_name                = azurerm_device_registry_asset_endpoint_profile.test.extended_location_name
-	extended_location_type                = azurerm_device_registry_asset_endpoint_profile.test.extended_location_type
-	target_address                        = azurerm_device_registry_asset_endpoint_profile.test.target_address
-	endpoint_profile_type                 = azurerm_device_registry_asset_endpoint_profile.test.endpoint_profile_type
-	discovered_asset_endpoint_profile_ref = "discoveredAssetEndpointProfile123"
-	location                              = azurerm_device_registry_asset_endpoint_profile.test.location
+  name                                  = azurerm_device_registry_asset_endpoint_profile.test.name
+  resource_group_name                   = azurerm_device_registry_asset_endpoint_profile.test.resource_group_name
+  extended_location_name                = azurerm_device_registry_asset_endpoint_profile.test.extended_location_name
+  extended_location_type                = azurerm_device_registry_asset_endpoint_profile.test.extended_location_type
+  target_address                        = azurerm_device_registry_asset_endpoint_profile.test.target_address
+  endpoint_profile_type                 = azurerm_device_registry_asset_endpoint_profile.test.endpoint_profile_type
+  discovered_asset_endpoint_profile_ref = "discoveredAssetEndpointProfile123"
+  location                              = azurerm_device_registry_asset_endpoint_profile.test.location
 }
+
 
 `, template)
 }
@@ -373,12 +377,12 @@ func (AssetEndpointProfileTestResource) constantsTemplate(data acceptance.TestDa
 	trimmedRandomInteger := randomInteger % 10000000000
 	return fmt.Sprintf(`
 locals {
-	custom_location           = "adr-acctest-cl%[1]d"
-	storage_account           = "acctestsa%[2]d"
-	schema_registry           = "acctest-sr-%[1]d"
-	schema_registry_namespace = "acctests-rn-%[1]d"
-	#resource_group_name       = "adr-acctest-rg-%[1]d"
-	resource_group_name       = "adr-terraform-acctest-rg"
+  custom_location           = "adr-acctest-cl%[1]d"
+  storage_account           = "acctestsa%[2]d"
+  schema_registry           = "acctest-sr-%[1]d"
+  schema_registry_namespace = "acctests-rn-%[1]d"
+  #resource_group_name       = "adr-acctest-rg-%[1]d"
+  resource_group_name = "adr-terraform-acctest-rg"
 }
 
 provider "azurerm" {
@@ -387,6 +391,74 @@ provider "azurerm" {
 
 data "azurerm_client_config" "current" {}
 `, randomInteger, trimmedRandomInteger)
+}
+
+func (AssetEndpointProfileTestResource) preventTemplateDeletion() string {
+	return fmt.Sprintf(`
+// removed {
+//   from = azurerm_resource_group.test
+
+//   lifecycle {
+//     destroy = false
+//   }
+// }
+
+removed {
+  from = azurerm_virtual_network.test
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = azurerm_subnet.test
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+	from = azurerm_public_ip.test
+
+	lifecycle {
+		destroy = false
+	}
+}
+
+removed {
+	from = azurerm_network_interface.test
+
+	lifecycle {
+		destroy = false
+	}
+}
+
+removed {
+	from = azurerm_network_security_group.my_terraform_nsg
+	
+	lifecycle {
+		destroy = false
+	}
+}
+
+removed {
+	from = azurerm_network_interface_security_group_association.test
+
+	lifecycle {
+		destroy = false
+	}
+}
+
+removed {
+	from = azurerm_linux_virtual_machine.test
+
+	lifecycle {
+		destroy = false
+	}
+}
+`)
 }
 
 /*
@@ -469,10 +541,14 @@ resource "azurerm_network_interface_security_group_association" "test" {
 }
 
 resource "azurerm_linux_virtual_machine" "test" {
-  name                            = "acctestVM-%[1]d"
-  resource_group_name             = local.resource_group_name
-  location                        = "%[2]s"
-  size                            = "Standard_F2"
+  name                = "acctestVM-%[1]d"
+  resource_group_name = local.resource_group_name
+  location            = "%[2]s"
+  tags = {
+    "azsecpack"                                                                = "nonprod"
+    "platformsettings.host_environment.service.platform_optedin_for_rootcerts" = "true"
+  }
+  size                            = "Standard_F8s_v2"
   admin_username                  = "adminuser"
   admin_password                  = "%[3]s"
   provision_vm_agent              = false
@@ -492,12 +568,12 @@ resource "azurerm_linux_virtual_machine" "test" {
     version   = "latest"
   }
 
-	identity {
-		type = "SystemAssigned, UserAssigned"
-		identity_ids = [
+  identity {
+    type = "SystemAssigned, UserAssigned"
+    identity_ids = [
 			%[6]s
-		]
-	}
+    ]
+  }
 
 	%[4]s
 
@@ -515,11 +591,11 @@ In case of errors during remote execution of scripts, the logs are written to a 
 `agent_log` and copies the file to the local machine with scp.
 */
 func (r AssetEndpointProfileTestResource) provisionTemplate(data acceptance.TestData, credential string, randomInteger int) string {
-	// Get client secrets from env vars because we need them 
+	// Get client secrets from env vars because we need them
 	// to remote execute az cli commands on the VM.
 	clientId := os.Getenv("ARM_CLIENT_ID")
 	clientSecret := os.Getenv("ARM_CLIENT_SECRET")
-	
+
 	return fmt.Sprintf(`
 connection {
  	type     = "ssh"

@@ -4,6 +4,22 @@ TESTTIMEOUT=180m
 
 .EXPORT_ALL_VARIABLES:
   TF_SCHEMA_PANIC_ON_ERROR=1
+  ARM_SUBSCRIPTION_ID=efb15086-3322-405d-a9d0-c35715a9b722
+  ARM_TENANT_ID=72f988bf-86f1-41af-91ab-2d7cd011db47
+  ARM_CLIENT_ID=17977393-e53c-45dd-a8c1-4d1a06c24298
+  ARM_USE_MSI=true
+  ARM_ENVIRONMENT=public
+  ARM_TEST_LOCATION=westus2
+  ARM_TEST_LOCATION_ALT=eastus2
+  ARM_TEST_LOCATION_ALT2=eastus
+  ARM_PROVIDER_ENHANCED_VALIDATION=false
+  ARM_SKIP_PROVIDER_REGISTRATION=true
+  ARM_FULL_CLIENT_ID_PATH="/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/MC_adr-terraform-test-113553226_adr-terraform-test_eastus2/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azurepolicy-adr-terraform-test"
+  MSYS_NO_PATHCONV=1
+#   ARM_DEVICE_REGISTRY_CUSTOM_LOCATION=/subscriptions/efb15086-3322-405d-a9d0-c35715a9b722/resourceGroups/adr-terraform-test-113553226/providers/Microsoft.ExtendedLocation/customLocations/location-2h2vr
+#   ARM_DEVICE_REGISTRY_RESOURCE_GROUP=adr-terraform-test-113553226
+  TF_LOG=DEBUG
+  TF_LOG_PATH=terraform.txt
 
 default: build
 
@@ -99,7 +115,7 @@ test-compile:
 testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout $(TESTTIMEOUT) -ldflags="-X=github.com/hashicorp/terraform-provider-azurerm/version.ProviderVersion=acc"
 
-acctests: fmtcheck
+acctests:
 	TF_ACC=1 go test -v ./internal/services/$(SERVICE) $(TESTARGS) -timeout $(TESTTIMEOUT) -ldflags="-X=github.com/hashicorp/terraform-provider-azurerm/version.ProviderVersion=acc"
 
 debugacc: fmtcheck
