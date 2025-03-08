@@ -54,4 +54,8 @@ python3 "${working_dir}/setup_aio_cluster.py" \
 --schemaRegistry "${schema_registry}" \
 --schemaRegistryNamespace "${schema_registry_namespace}"
 
-printf "Setup completed successfully.\n"
+printf "Setup script completed.\n"
+
+printf "Sleeping to allow finish provisioning...\n"
+sleep 600
+printf "Sleeping finished. Resuming tests...\n"

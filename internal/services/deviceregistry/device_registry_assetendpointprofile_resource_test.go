@@ -234,9 +234,6 @@ func testAccAssetEndpointProfile_initializeCluster(t *testing.T, randomInteger i
 	data.ResourceSequentialTest(t, r, []acceptance.TestStep{
 		{
 			Config: r.template(data, randomInteger),
-			Check: acceptance.ComposeTestCheckFunc(
-				check.That(data.ResourceName).ExistsInAzure(r),
-			),
 		},
 		{
 			Config: r.preventTemplateDeletion(),
@@ -631,8 +628,7 @@ provisioner "remote-exec" {
 	inline = [
 		"sudo sed -i 's/\r$//' %[3]s/setup_aio_cluster.sh",
 		"sudo chmod +x %[3]s/setup_aio_cluster.sh",
-		"(bash %[3]s/setup_aio_cluster.sh > %[3]s/agent_log) || (echo 'Error occurred during script execution' >> %[3]s/agent_log)",
-		"scp adminuser@${azurerm_public_ip.test.ip_address}:%[3]s/agent_log ~/go/src/github.com/hashicorp/terraform-provider-azurerm/agent_log",
+		"bash %[3]s/setup_aio_cluster.sh > %[3]s/agent_log",
 	]
 }
 `, credential, data.RandomInteger, "/home/adminuser", clientId, clientSecret)
