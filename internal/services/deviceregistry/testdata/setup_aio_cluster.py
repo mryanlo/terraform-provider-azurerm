@@ -160,7 +160,7 @@ def install_azure_iot_ops_extension(cluster_name, resource_group_name, schema_re
         # `az iot ops create --cluster <cluster_name> --resource-group <resource_group_name> --name <cluster_name>-instance  --sr-resource-id <schema_registry_id> --broker-frontend-replicas 1 --broker-frontend-workers 1  --broker-backend-part 1  --broker-backend-workers 1 --broker-backend-rf 2 --broker-mem-profile Low --custom-location <custom_location> --no-progress --yes --only-show-errors`
         # Default timeout is 15 minutes.
         aio_create_cmd = f"az iot ops create --cluster {cluster_name} --resource-group {resource_group_name} --name {cluster_name}-instance  --sr-resource-id {schema_registry_id.strip()} --broker-frontend-replicas 1 --broker-frontend-workers 1  --broker-backend-part 1  --broker-backend-workers 1 --broker-backend-rf 2 --broker-mem-profile Low --custom-location {custom_location} --no-progress --yes --only-show-errors"
-        response = subprocess.run(aio_create_cmd, timeout=aio_create_timeout, stdout=PIPE, stderr=PIPE, shell=True)
+        response = subprocess.run(aio_create_cmd, stdout=PIPE, stderr=PIPE, shell=True) # timeout=aio_create_timeout, stdout=PIPE, stderr=PIPE, shell=True)
         print(response)
         if response.returncode != 0:
             err = "Failed to install Azure IoT Operations extension on cluster " + cluster_name + ": " + str(response.stderr)
@@ -192,14 +192,18 @@ def setup_aio_arc_enabled_cluster():
     except Exception as e:
         raise Exception("Failed to parse arguments." + str(e))
 
-    # register_az_providers()
-    install_az_extensions()
+    try:
+        # register_az_providers()
+        install_az_extensions()
 
-    onboard_k8s_cluster(args.resourceGroupName, args.clusterName, args.location)
+        onboard_k8s_cluster(args.resourceGroupName, args.clusterName, args.location)
 
-    setup_schema_registry(args.storageAccount, args.schemaRegistry, args.schemaRegistryNamespace, args.resourceGroupName, args.location)
+        setup_schema_registry(args.storageAccount, args.schemaRegistry, args.schemaRegistryNamespace, args.resourceGroupName, args.location)
 
-    install_azure_iot_ops_extension(args.clusterName, args.resourceGroupName, args.schemaRegistry, args.customLocation)
+        install_azure_iot_ops_extension(args.clusterName, args.resourceGroupName, args.schemaRegistry, args.customLocation)
+    except Exception as e:
+        # Swallow error. We need the bash script to output the log file to the local machine
+        print("Setup AIO Cluster Script Failed with following error: " + str(e))
 
 if __name__ == "__main__":
     setup_aio_arc_enabled_cluster()
