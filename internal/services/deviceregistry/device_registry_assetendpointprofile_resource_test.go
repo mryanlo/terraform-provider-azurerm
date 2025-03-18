@@ -18,46 +18,6 @@ import (
 
 type AssetEndpointProfileTestResource struct{}
 
-// func TestAssetEndpointProfileResource(t *testing.T) {
-// 	// Run all the acceptance tests for the AssetEndpointProfile resource on the cluster.
-// 	// NOTE: this is a combined test rather than separate split out tests due to
-// 	// AssetEndpointProfile resources must be provisioned to the arc-enabled AIO cluster
-// 	// and avoid creating the cluster multiple times.
-// 	testCases := map[string]map[string]func(t *testing.T, randomInteger int){
-// 		// Run the AIO cluster initialization first.
-// 		"InitializeAioCluster": {
-// 			"initializeCluster": testAccAssetEndpointProfile_initializeCluster,
-// 		},
-// 		// Run the acceptance tests for the AssetEndpointProfile resource
-// 		"Resource": {
-// 			"basic":                    testAccAssetEndpointProfile_basic,
-// 			"requiresImport":           testAccAssetEndpointProfile_requiresImport,
-// 			"completeCertificate":      testAccAssetEndpointProfile_complete_certificate,
-// 			"completeUsernamePassword": testAccAssetEndpointProfile_complete_usernamePassword,
-// 			"completeAnonymous":        testAccAssetEndpointProfile_complete_anonymous,
-// 			"update":                   testAccAssetEndpointProfile_update,
-// 		},
-// 	}
-
-// 	// Generate a random integer of size 18 that will stay the same in all test cases.
-// 	// This value will be used to create unique names for the AIO cluster's infra resources
-// 	// (such as the resource group name, VM name, etc) but will be kept constant
-// 	// so that the same cluster is used for all the acceptance tests.
-// 	constantRandomInt := acceptance.RandTimeInt()
-
-// 	for group, m := range testCases {
-// 		m := m
-// 		t.Run(group, func(t *testing.T) {
-// 			for name, tc := range m {
-// 				tc := tc
-// 				t.Run(name, func(t *testing.T) {
-// 					tc(t, constantRandomInt)
-// 				})
-// 			}
-// 		})
-// 	}
-// }
-
 func TestAccAssetEndpointProfile_basic(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset_endpoint_profile", "test")
 	r := AssetEndpointProfileTestResource{}
@@ -227,20 +187,6 @@ func TestAccAssetEndpointProfile_update(t *testing.T) {
 	})
 }
 
-// func testAccAssetEndpointProfile_initializeCluster(t *testing.T, randomInteger int) {
-// 	data := acceptance.BuildTestData(t, "azurerm_linux_virtual_machine", "test")
-// 	r := AssetEndpointProfileTestResource{}
-
-// 	data.ResourceTest(t, r, []acceptance.TestStep{
-// 		{
-// 			Config: r.template(data, randomInteger),
-// 		},
-// 		{
-// 			Config: r.preventTemplateDeletion(),
-// 		},
-// 	})
-// }
-
 func (AssetEndpointProfileTestResource) Exists(ctx context.Context, client *clients.Client, state *pluginsdk.InstanceState) (*bool, error) {
 	id, err := assetendpointprofiles.ParseAssetEndpointProfileID(state.ID)
 	if err != nil {
@@ -374,8 +320,7 @@ locals {
   storage_account           = "acctestsa%[2]d"
   schema_registry           = "acctest-sr-%[1]d"
   schema_registry_namespace = "acctests-rn-%[1]d"
-  #resource_group_name       = "adr-acctest-rg-%[1]d"
-  resource_group_name = "adr-terraform-acctest-rg"
+  resource_group_name       = "adr-acctest-rg-%[1]d"
 }
 
 provider "azurerm" {
@@ -385,74 +330,6 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 `, data.RandomInteger, trimmedRandomInteger)
 }
-
-// func (AssetEndpointProfileTestResource) preventTemplateDeletion() string {
-// 	return fmt.Sprintf(`
-// // removed {
-// //   from = azurerm_resource_group.test
-
-// //   lifecycle {
-// //     destroy = false
-// //   }
-// // }
-
-// removed {
-//   from = azurerm_virtual_network.test
-
-//   lifecycle {
-//     destroy = false
-//   }
-// }
-
-// removed {
-//   from = azurerm_subnet.test
-
-//   lifecycle {
-//     destroy = false
-//   }
-// }
-
-// removed {
-// 	from = azurerm_public_ip.test
-
-// 	lifecycle {
-// 		destroy = false
-// 	}
-// }
-
-// removed {
-// 	from = azurerm_network_interface.test
-
-// 	lifecycle {
-// 		destroy = false
-// 	}
-// }
-
-// removed {
-// 	from = azurerm_network_security_group.my_terraform_nsg
-	
-// 	lifecycle {
-// 		destroy = false
-// 	}
-// }
-
-// removed {
-// 	from = azurerm_network_interface_security_group_association.test
-
-// 	lifecycle {
-// 		destroy = false
-// 	}
-// }
-
-// removed {
-// 	from = azurerm_linux_virtual_machine.test
-
-// 	lifecycle {
-// 		destroy = false
-// 	}
-// }
-// `)
-// }
 
 /*
 The terraform template for all the resources needed to create an AIO cluster on a VM
@@ -467,10 +344,10 @@ func (r AssetEndpointProfileTestResource) template(data acceptance.TestData) str
 	return fmt.Sprintf(`
 %[5]s
 
-// resource "azurerm_resource_group" "test" {
-//   name     = local.resource_group_name
-//   location = "%[2]s"
-// }
+resource "azurerm_resource_group" "test" {
+  name     = local.resource_group_name
+  location = "%[2]s"
+}
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestnw-%[1]d"
@@ -600,9 +477,9 @@ connection {
 provisioner "file" {
 	content = templatefile("testdata/setup_aio_cluster.sh.tftpl", {
 		subscription_id     = data.azurerm_client_config.current.subscription_id
-		resource_group_name = local.resource_group_name
+		resource_group_name = azurerm_resource_group.test.name
 		cluster_name        = "acctest-akcc-%[2]d"
-		location            = "westus2"
+		location            = azurerm_resource_group.test.location
 		custom_location     = local.custom_location
 		storage_account     = local.storage_account
 		schema_registry     = local.schema_registry
@@ -615,28 +492,17 @@ provisioner "file" {
 	destination = "%[3]s/setup_aio_cluster.sh"
 }
 
-provisioner "file" {
- 	source      = "testdata/setup_aio_cluster.py"
- 	destination = "%[3]s/setup_aio_cluster.py"
-}
-
 provisioner "remote-exec" {
 	inline = [
 		"sudo sed -i 's/\r$//' %[3]s/setup_aio_cluster.sh",
 		"sudo chmod +x %[3]s/setup_aio_cluster.sh",
-		"bash %[3]s/setup_aio_cluster.sh > %[3]s/agent_log",
+		"sudo bash %[3]s/setup_aio_cluster.sh > %[3]s/agent_log",
 	]
-}
-
-provisioner "local-exec" {
-	command = "echo 'Completed running setup_aio_cluster.sh on VM.' > acctest_run.log"
 }
 `, credential, data.RandomInteger, "/home/adminuser", clientId, clientSecret)
 }
 
 // Generates a random password for the VM.
 func (AssetEndpointProfileTestResource) getCredentials() string {
-	fmt.Printf("%d\n", rand.Intn(10000))
-	return fmt.Sprintf("P@$$w0rd!")
-	// return fmt.Sprintf("P@$$w0rd%d!", rand.Intn(10000))
+	return fmt.Sprintf("P@$$w0rd%d!", rand.Intn(10000))
 }
