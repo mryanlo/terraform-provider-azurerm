@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Replace all the <...> placeholders with the actual parameter values to the .sh.tftpl file.
+## Required to replace:
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 export REGION=<region>
 export RESOURCE_GROUP=<resource_group_name>
@@ -15,8 +16,9 @@ export STORAGE_ACCOUNT_NAME=<storage_account_name> # e.g. "adrstgacct", max 24 c
 export USER_ASSIGNED_MI_NAME=<managed_identity_name> # e.g. "adr-mi-1"
 export KEYVAULT_NAME=<keyvault_name> # e.g. "adr-kv"
 
+## Optional: (only uncomment if you plan to use managed identity or service principal for the `az login` step
 # export AZURE_CLIENT_ID=<client_id> # managed identity or service principal client id
-# export AZURE_CLIENT_SECRET=<client_secret> # managed identity or service principal client secret
+# export AZURE_CLIENT_SECRET=<client_secret> # service principal client secret (do not uncomment if managed identity)
 
 curl -sfL https://get.k3s.io | sh -
 
