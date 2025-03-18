@@ -15,8 +15,8 @@ export STORAGE_ACCOUNT_NAME=<storage_account_name> # e.g. "adrstgacct", max 24 c
 export USER_ASSIGNED_MI_NAME=<managed_identity_name> # e.g. "adr-mi-1"
 export KEYVAULT_NAME=<keyvault_name> # e.g. "adr-kv"
 
-export AZURE_CLIENT_ID=<client_id> # managed identity or service principal client id
-export AZURE_CLIENT_SECRET=<client_secret> # managed identity or service principal client secret
+# export AZURE_CLIENT_ID=<client_id> # managed identity or service principal client id
+# export AZURE_CLIENT_SECRET=<client_secret> # managed identity or service principal client secret
 
 curl -sfL https://get.k3s.io | sh -
 
