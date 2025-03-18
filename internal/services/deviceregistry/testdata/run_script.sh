@@ -3,7 +3,7 @@
 # Replace all the <...> placeholders with the actual parameter values to the .sh.tftpl file.
 ## Required to replace:
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-export REGION=<region>
+export LOCATION=<location>
 export RESOURCE_GROUP=<resource_group_name>
 export CLUSTER_NAME=<k8s_cluster_name> # e.g. "adr-cluster"
 export AIO_CLUSTER_NAME=<aio_cluster_resource_name> # e.g. "adr-aio"
@@ -38,7 +38,7 @@ az extension add --name connectedk8s
 
 az extension add --name azure-iot-ops
 
-az connectedk8s connect --name $CLUSTER_NAME -l $REGION --resource-group $RESOURCE_GROUP --enable-oidc-issuer --enable-workload-identity
+az connectedk8s connect --name $CLUSTER_NAME -l $LOCATION --resource-group $RESOURCE_GROUP --enable-oidc-issuer --enable-workload-identity
 
 SERVICE_ACCOUNT_ISSUER=$(az connectedk8s show --resource-group $RESOURCE_GROUP --name $CLUSTER_NAME --query oidcIssuerProfile.issuerUrl --output tsv)
 sudo tee /etc/rancher/k3s/config.yaml > /dev/null <<EOF
@@ -61,9 +61,9 @@ az iot ops init  --subscription $SUBSCRIPTION_ID -g $RESOURCE_GROUP --cluster $C
 
 az iot ops create  --subscription $SUBSCRIPTION_ID  -g $RESOURCE_GROUP  --cluster $CLUSTER_NAME --custom-location $AIO_CLUSTER_CUSTOM_LOCATION_NAME  -n $AIO_CLUSTER_NAME  --sr-resource-id $(az iot ops schema registry list -g $RESOURCE_GROUP --query "[?name=='$SCHEMA_REGISTRY_NAME'].id" -o tsv)  --add-insecure-listener --enable-rsync --debug --yes --no-progress
 
-az identity create --name $USER_ASSIGNED_MI_NAME --resource-group $RESOURCE_GROUP --location $REGION --subscription $SUBSCRIPTION_ID
+az identity create --name $USER_ASSIGNED_MI_NAME --resource-group $RESOURCE_GROUP --location $LOCATION --subscription $SUBSCRIPTION_ID
 
-az keyvault create --resource-group $RESOURCE_GROUP --location $REGION --name $KEYVAULT_NAME --enable-rbac-authorization
+az keyvault create --resource-group $RESOURCE_GROUP --location $LOCATION --name $KEYVAULT_NAME --enable-rbac-authorization
 
 az role assignment create --role "Key Vault Secrets Officer" --assignee $(az ad signed-in-user show --query id -o tsv) --scope /subscriptions/$SUBSCRIPTION_ID/resourcegroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$KEYVAULT_NAME
 
