@@ -16,11 +16,20 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
+const (
+	ASSET_ARM_CLIENT_ID     = "ARM_CLIENT_ID"
+	ASSET_ARM_CLIENT_SECRET = "ARM_CLIENT_SECRET"
+)
+
 type AssetTestResource struct{}
 
 func TestAccAsset_basic(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset", "test")
 	r := AssetTestResource{}
+
+	if os.Getenv(ASSET_ARM_CLIENT_ID) == "" || os.Getenv(ASSET_ARM_CLIENT_SECRET) == "" {
+		t.Skipf("Skipping test due to missing environment variables %s and/or %s", ASSET_ARM_CLIENT_ID, ASSET_ARM_CLIENT_SECRET)
+	}
 
 	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
@@ -44,6 +53,10 @@ func TestAccAsset_basic(t *testing.T) {
 func TestAccAsset_complete(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset", "test")
 	r := AssetTestResource{}
+
+	if os.Getenv(ASSET_ARM_CLIENT_ID) == "" || os.Getenv(ASSET_ARM_CLIENT_SECRET) == "" {
+		t.Skipf("Skipping test due to missing environment variables %s and/or %s", ASSET_ARM_CLIENT_ID, ASSET_ARM_CLIENT_SECRET)
+	}
 
 	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
@@ -111,6 +124,10 @@ func TestAccAsset_requiresImport(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset", "test")
 	r := AssetTestResource{}
 
+	if os.Getenv(ASSET_ARM_CLIENT_ID) == "" || os.Getenv(ASSET_ARM_CLIENT_SECRET) == "" {
+		t.Skipf("Skipping test due to missing environment variables %s and/or %s", ASSET_ARM_CLIENT_ID, ASSET_ARM_CLIENT_SECRET)
+	}
+
 	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
 			Config: r.basic(data),
@@ -125,6 +142,10 @@ func TestAccAsset_requiresImport(t *testing.T) {
 func TestAccAsset_update(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_device_registry_asset", "test")
 	r := AssetTestResource{}
+
+	if os.Getenv(ASSET_ARM_CLIENT_ID) == "" || os.Getenv(ASSET_ARM_CLIENT_SECRET) == "" {
+		t.Skipf("Skipping test due to missing environment variables %s and/or %s", ASSET_ARM_CLIENT_ID, ASSET_ARM_CLIENT_SECRET)
+	}
 
 	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
@@ -219,7 +240,7 @@ func (r AssetTestResource) basic(data acceptance.TestData) string {
 resource "azurerm_device_registry_asset" "test" {
   name                       = "acctest-asset-%[2]d"
   resource_group_name        = local.resource_group_name
-  extended_location_name     = local.custom_location_name
+  extended_location_name     = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
   extended_location_type     = "CustomLocation"
   asset_endpoint_profile_ref = "myAssetEndpointProfile"
   discovered_asset_refs = [
@@ -231,9 +252,9 @@ resource "azurerm_device_registry_asset" "test" {
   enabled           = false
   external_asset_id = "8ZBA6LRHU0A458969"
   location          = "%[3]s"
-	depends_on = [
-		azurerm_linux_virtual_machine.test
-	]
+  depends_on = [
+    azurerm_linux_virtual_machine.test
+  ]
 }
 `, template, data.RandomInteger, data.Locations.Primary)
 }
@@ -246,7 +267,7 @@ func (r AssetTestResource) complete(data acceptance.TestData) string {
 resource "azurerm_device_registry_asset" "test" {
   name                       = "acctest-asset-%[2]d"
   resource_group_name        = local.resource_group_name
-  extended_location_name     = local.custom_location_name
+  extended_location_name     = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
   extended_location_type     = "CustomLocation"
   location                   = "%[3]s"
   asset_endpoint_profile_ref = "myAssetEndpointProfile"
@@ -357,9 +378,9 @@ resource "azurerm_device_registry_asset" "test" {
     topic_path         = "/path/event2"
     topic_retain       = "Keep"
   }
-	depends_on = [
-		azurerm_linux_virtual_machine.test
-	]
+  depends_on = [
+    azurerm_linux_virtual_machine.test
+  ]
 }
 `, template, data.RandomInteger, data.Locations.Primary)
 }
@@ -379,12 +400,10 @@ resource "azurerm_device_registry_asset" "import" {
   enabled                    = azurerm_device_registry_asset.test.enabled
   external_asset_id          = azurerm_device_registry_asset.test.external_asset_id
   location                   = azurerm_device_registry_asset.test.location
-	depends_on = [
-		azurerm_linux_virtual_machine.test
-	]
+  depends_on = [
+    azurerm_linux_virtual_machine.test
+  ]
 }
-
-
 `, template)
 }
 
@@ -401,15 +420,20 @@ locals {
   cluster_name              = "acctest-akcc-%[1]d"
   storage_account           = "acctestsa%[2]d"
   schema_registry           = "acctest-sr-%[1]d"
-  schema_registry_namespace = "acctests-rn-%[1]d"
-  resource_group_name       = "adr-acctest-rg-%[1]d"
-  aio_cluster_resource_name = "adr-aio%[1]d"
-  managed_identity_name     = "adr-mi%[1]d"
-  keyvault_name             = "adr-kv%[1]d"
+  schema_registry_namespace = "acctest-rn-%[1]d"
+  resource_group_name       = "acctest-rg-%[1]d"
+  aio_cluster_resource_name = "acctest-aio%[1]d"
+  managed_identity_name     = "acctest-mi%[1]d"
+  keyvault_name             = "acctest-kv%[1]d"
 }
 
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+      // RG will contain AIO resources created from VM. So, we don't want to prevent RG deletion which will clean these up.
+      prevent_deletion_if_contains_resources = false
+    }
+  }
 }
 
 data "azurerm_client_config" "current" {}
@@ -437,39 +461,52 @@ resource "azurerm_virtual_network" "test" {
   name                = "acctestnw-%[1]d"
   address_space       = ["10.0.0.0/16"]
   location            = "%[2]s"
-  resource_group_name = local.resource_group_name
+  resource_group_name = azurerm_resource_group.test.name
+  depends_on = [
+    azurerm_resource_group.test
+  ]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "internal"
-  resource_group_name  = local.resource_group_name
+  resource_group_name  = azurerm_resource_group.test.name
   virtual_network_name = azurerm_virtual_network.test.name
   address_prefixes     = ["10.0.2.0/24"]
+  depends_on = [
+    azurerm_resource_group.test
+  ]
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%[1]d"
   location            = "%[2]s"
-  resource_group_name = local.resource_group_name
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Static"
+  depends_on = [
+    azurerm_resource_group.test
+  ]
 }
 
 resource "azurerm_network_interface" "test" {
   name                = "acctestnic-%[1]d"
   location            = "%[2]s"
-  resource_group_name = local.resource_group_name
+  resource_group_name = azurerm_resource_group.test.name
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.test.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.test.id
   }
+
+  depends_on = [
+    azurerm_resource_group.test
+  ]
 }
 
 resource "azurerm_network_security_group" "my_terraform_nsg" {
   name                = "myNetworkSG-%[1]d"
   location            = "%[2]s"
-  resource_group_name = local.resource_group_name
+  resource_group_name = azurerm_resource_group.test.name
   security_rule {
     name                       = "SSH"
     priority                   = 1001
@@ -487,17 +524,24 @@ resource "azurerm_network_security_group" "my_terraform_nsg" {
       security_rule,
     ]
   }
+
+  depends_on = [
+    azurerm_resource_group.test
+  ]
 }
 
 resource "azurerm_network_interface_security_group_association" "test" {
   network_interface_id      = azurerm_network_interface.test.id
   network_security_group_id = azurerm_network_security_group.my_terraform_nsg.id
+  depends_on = [
+    azurerm_resource_group.test
+  ]
 }
 
 resource "azurerm_linux_virtual_machine" "test" {
-  name                = "acctestVM-%[1]d"
-  resource_group_name = local.resource_group_name
-  location            = "%[2]s"
+  name                            = "acctestVM-%[1]d"
+  resource_group_name             = azurerm_resource_group.test.name
+  location                        = "%[2]s"
   size                            = "Standard_F8s_v2"
   admin_username                  = "adminuser"
   admin_password                  = "%[3]s"
@@ -519,7 +563,7 @@ resource "azurerm_linux_virtual_machine" "test" {
   }
 
   identity {
-		type = "SystemAssigned"
+    type = "SystemAssigned"
   }
 
 	%[4]s
@@ -538,8 +582,8 @@ Then ssh's into the VM and executes the cluster setup scripts.
 func (r AssetTestResource) provisionTemplate(data acceptance.TestData, credential string) string {
 	// Get client secrets from env vars because we need them
 	// to remote execute az cli commands on the VM.
-	clientId := os.Getenv("ARM_CLIENT_ID")
-	clientSecret := os.Getenv("ARM_CLIENT_SECRET")
+	clientId := os.Getenv(ASSET_ARM_CLIENT_ID)
+	clientSecret := os.Getenv(ASSET_ARM_CLIENT_SECRET)
 
 	return fmt.Sprintf(`
 connection {
@@ -573,7 +617,7 @@ provisioner "remote-exec" {
 	inline = [
 		"sudo sed -i 's/\r$//' %[3]s/setup_aio_cluster.sh",
 		"sudo chmod +x %[3]s/setup_aio_cluster.sh",
-		"sudo bash %[3]s/setup_aio_cluster.sh > %[3]s/agent_log",
+		"sudo bash %[3]s/setup_aio_cluster.sh &> %[3]s/agent_log",
 	]
 }
 `, credential, data.RandomInteger, "/home/adminuser", clientId, clientSecret)

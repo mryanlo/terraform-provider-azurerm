@@ -14,9 +14,8 @@ export TENANT_ID=${tenant_id}
 export USER_ASSIGNED_MI_NAME=${managed_identity_name}
 export KEYVAULT_NAME=${keyvault_name}
 
-## Optional: (only uncomment if you plan to use managed identity or service principal for the `az login` step
-# export AZURE_CLIENT_ID=${client_id} # managed identity or service principal client id
-# export AZURE_CLIENT_SECRET=${client_secret} # service principal client secret (do not uncomment if managed identity)
+export AZURE_CLIENT_ID=${client_id} # managed identity or service principal client id
+export AZURE_CLIENT_SECRET=${client_secret} # service principal client secret
 
 printf "Subscription ID: $SUBSCRIPTION_ID\n"
 printf "Resource Group: $RESOURCE_GROUP\n"
@@ -45,10 +44,7 @@ echo "Configuring k3s..."
 sudo chmod 777 /etc/rancher/k3s/k3s.yaml
 
 echo "Logging in to Azure CLI..."
-## Optional: (comment out below line and then uncomment one of the succeeding two lines for logging in with AZ CLI depending on if you use managed identity or service principal to login)
-# az login
-az login --identity --client-id $AZURE_CLIENT_ID # Managed Identity login
-# az login --client-id $AZURE_CLIENT_ID --password $AZURE_CLIENT_SECRET --service-principal --tenant $TENANT_ID # Service Principal login
+az login --username $AZURE_CLIENT_ID --password $AZURE_CLIENT_SECRET --service-principal --tenant $TENANT_ID # Service Principal login
 
 echo "Setting Azure subscription..."
 az account set --subscription "$SUBSCRIPTION_ID"
