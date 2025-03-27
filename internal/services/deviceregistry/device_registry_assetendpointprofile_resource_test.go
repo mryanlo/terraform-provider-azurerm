@@ -243,8 +243,8 @@ func (r AssetEndpointProfileTestResource) basic(data acceptance.TestData) string
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
   name                                  = "acctest-assetendpointprofile-%[2]d"
-  resource_group_name                   = local.resource_group_name
-  extended_location_name                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  resource_group_name                   = azurerm_resource_group.test.name
+  extended_location_name                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.test.name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
   extended_location_type                = "CustomLocation"
   target_address                        = "opc.tcp://foo"
   endpoint_profile_type                 = "OpcUa"
@@ -265,8 +265,8 @@ func (r AssetEndpointProfileTestResource) completeCertificate(data acceptance.Te
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
   name                                     = "acctest-assetendpointprofile-%[2]d"
-  resource_group_name                      = local.resource_group_name
-  extended_location_name                   = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  resource_group_name                      = azurerm_resource_group.test.name
+  extended_location_name                   = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.test.name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
   extended_location_type                   = "CustomLocation"
   target_address                           = "opc.tcp://foo"
   endpoint_profile_type                    = "OpcUa"
@@ -293,8 +293,8 @@ func (r AssetEndpointProfileTestResource) completeUsernamePassword(data acceptan
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
   name                                               = "acctest-assetendpointprofile-%[2]d"
-  resource_group_name                                = local.resource_group_name
-  extended_location_name                             = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  resource_group_name                                = azurerm_resource_group.test.name
+  extended_location_name                             = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.test.name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
   extended_location_type                             = "CustomLocation"
   target_address                                     = "opc.tcp://foo"
   endpoint_profile_type                              = "OpcUa"
@@ -322,8 +322,8 @@ func (r AssetEndpointProfileTestResource) completeAnonymous(data acceptance.Test
 
 resource "azurerm_device_registry_asset_endpoint_profile" "test" {
   name                                  = "acctest-assetendpointprofile-%[2]d"
-  resource_group_name                   = local.resource_group_name
-  extended_location_name                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  resource_group_name                   = azurerm_resource_group.test.name
+  extended_location_name                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.test.name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
   extended_location_type                = "CustomLocation"
   target_address                        = "opc.tcp://foo"
   endpoint_profile_type                 = "OpcUa"

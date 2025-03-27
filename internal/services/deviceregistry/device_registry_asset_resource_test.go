@@ -239,8 +239,8 @@ func (r AssetTestResource) basic(data acceptance.TestData) string {
 
 resource "azurerm_device_registry_asset" "test" {
   name                       = "acctest-asset-%[2]d"
-  resource_group_name        = local.resource_group_name
-  extended_location_name     = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  resource_group_name        = azurerm_resource_group.test.name
+  extended_location_name     = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.test.name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
   extended_location_type     = "CustomLocation"
   asset_endpoint_profile_ref = "myAssetEndpointProfile"
   discovered_asset_refs = [
@@ -266,8 +266,8 @@ func (r AssetTestResource) complete(data acceptance.TestData) string {
 
 resource "azurerm_device_registry_asset" "test" {
   name                       = "acctest-asset-%[2]d"
-  resource_group_name        = local.resource_group_name
-  extended_location_name     = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
+  resource_group_name        = azurerm_resource_group.test.name
+  extended_location_name     = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.test.name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location}"
   extended_location_type     = "CustomLocation"
   location                   = "%[3]s"
   asset_endpoint_profile_ref = "myAssetEndpointProfile"
